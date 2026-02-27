@@ -1,0 +1,72 @@
+body {
+    background-image: url("bg.png");
+    background-size: 1.5rem;
+    text-align: center;
+    border: 6px solid #B59E5F;
+}
+
+body, button {
+    font-family: 'Share Tech', system-ui;
+}
+
+h1 {
+    font-family: 'Fascinate', system-ui;
+}
+
+#file-input-label {
+    text-decoration: underline;
+}
+
+#file-input {
+    display: none;
+}
+
+button, select {
+    min-width: 5rem;
+    min-height: 2rem;
+    border: 3px solid black;
+    background-color: white;
+    border-radius: 3px;
+}
+
+button:hover {
+    background-color: #e0e0e0;
+}
+
+button:active {
+    background-color: #c0c0c0;
+}
+
+#preview-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.preview-image {
+    position: relative;
+}
+
+.preview-image .preview-button-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #ffffff80;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    justify-content: center;
+    align-items: center;
+}
+
+.preview-image:not(:hover) .preview-button-container {
+    display: none;
+}
+
+#error {
+    color: red;
+}

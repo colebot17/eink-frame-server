@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fascinate&family=Share+Tech&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <h1>Digital Photo Frame</h1>
+    <form method="POST" action="upload/" enctype="multipart/form-data" id="upload-form">
+        <label for="file-input" id="file-input-label">Upload Image</label>
+        <input id="file-input" type="file" name="photo" accept="image/*">
+        <select id="fit-input" name="fit">
+            <option value="contain">Contain</option>
+            <option value="cover">Cover</option>
+        </select>
+    </form>
+    <span id="processing-label" style="display:none">Processing...<br></span>
+    <span id="error" style="display:none"></span>
+    <br>
+    <img src="" id="preview">
+    <h2>Uploaded Images</h2>
+    <div id="preview-container"></div>
+    <br>
+    <button id="clear-display-button">Clear Display</button>
+    <br><br>
+</body>
+</html>
