@@ -132,7 +132,11 @@ async function getImages() {
 async function setCurrentImage(filename, b = true) {
     if (b) broadcast({ type: "update", filename });
     currentImage = filename;
-    await fs.writeFile("data/currentImage.txt", filename);
+
+    const dirPath = path.join(__dirname, "data");
+    await fs.mkdir(dirPath, { recursive: true });
+    const filePath = path.join(dirPath, "currentImage.txt");
+    await fs.writeFile(filePath, filename);
 }
 
 async function loadACT(path) {
