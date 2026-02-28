@@ -115,9 +115,7 @@ function addPreview(container, filename) {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                filename
-            })
+            body: JSON.stringify({ filename })
         });
         const { filename: fn } = await res.json();
         setPreview(fn);
@@ -131,5 +129,34 @@ function setPreview(filename) {
         document.getElementById("preview").src = "/image/" + filename;
     } else {
         document.getElementById("preview").src = "";
+    }
+}
+
+document.getElementById("wifi-config-button").addEventListener("click", () => wifiConfig());
+
+async function wifiConfig() {
+    const networks = [];
+    do {
+        const ssid = prompt("Enter the wifi SSID:");
+        if (!ssid) break;
+        const password = prompt("Enter the wifi password:");
+        if (password === undefined) break;
+        networks.push({ ssid, password });
+    } while (confirm("Would you like to add another network?"));
+
+    if (networks.length > 0 || confirm("No networks were added. Really remove all networks?")) {
+        const res = await fetch("/setWifi", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(networks)
+        });
+
+        if (res.ok) {
+            alert("Wi-Fi set");
+        } else {
+            alert("Error setting Wi-Fi");
+        }
     }
 }

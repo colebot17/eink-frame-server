@@ -91,6 +91,11 @@ app.get("/clear", async (req, res) => {
     broadcast({ type: "clear" });
 });
 
+app.post("/setWifi", async (req, res) => {
+    broadcast({ type: "setWifi", networks: req.body.networks });
+    res.status(200);
+});
+
 const server = http.createServer(app);
 
 const wss = new WebSocket.Server({ server });
