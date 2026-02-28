@@ -96,6 +96,11 @@ app.post("/setWifi", async (req, res) => {
     res.sendStatus(200);
 });
 
+app.post("/ota", async (req, res) => {
+    broadcast({ type: "ota" });
+    res.sendStatus(200);
+});
+
 const server = http.createServer(app);
 
 const wss = new WebSocket.Server({ server });

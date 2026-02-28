@@ -160,3 +160,14 @@ async function wifiConfig() {
         }
     }
 }
+
+document.getElementById("ota-button").addEventListener("click", () => otaUpdate());
+
+async function otaUpdate() {
+    const res = await fetch("/ota", { method: "GET" });
+    if (res.ok) {
+        alert("OTA sent");
+    } else {
+        alert("Error sending OTA");
+    }
+}
