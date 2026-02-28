@@ -92,8 +92,8 @@ app.get("/clear", async (req, res) => {
 });
 
 app.post("/setWifi", async (req, res) => {
-    broadcast({ type: "setWifi", networks: req.body.networks });
-    res.status(200);
+    broadcast({ type: "setWifi", networks: req.body });
+    res.sendStatus(200);
 });
 
 const server = http.createServer(app);
