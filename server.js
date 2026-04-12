@@ -3,7 +3,8 @@ const express = require("express");
 const multer = require("multer");
 const crypto = require("crypto");
 const cors = require("cors");
-const fs = require("fs").promises;
+const fs = require("fs");
+const fsp = fs.promises;
 const sharp = require("sharp");
 const bmp = require("sharp-bmp");
 const WebSocket = require("ws");
@@ -29,7 +30,7 @@ let currentImage = null;
 // load the current image from file
 async function loadCurrentImage() {
     try {
-        currentImage = await fs.readFile("data/currentImage.txt", "utf8");
+        currentImage = await fsp.readFile("data/currentImage.txt", "utf8");
     } catch {
         console.log("Current image not loaded from file");
     }
@@ -54,6 +55,21 @@ app.get("/current", (req, res) => {
     res.json({ filename: currentImage });
 });
 
+app.get("/currentImage", async (req, res) => {
+    const filePath = "processed/" + currentImage;
+
+    const stream = fs.createReadStream(filePath);
+
+    stream.on("open", () => {
+        res.setHeader("Content-Type", "application/octet-stream");
+        stream.pipe(res);
+    });
+
+    stream.on("error", () => {
+        res.status(404).send("Image not found");
+    });
+})
+
 app.get("/all", async (req, res) => {
     const files = await getImages();
     res.json({ files });
@@ -67,7 +83,7 @@ app.post("/delete", async (req, res) => {
             return res.status(400).json({ error: "Invalid filename" });
         }
 
-        await fs.unlink("processed/" + req.body.filename);
+        await fsp.unlink("processed/" + req.body.filename);
         
         if (currentImage === req.body.filename) {
             const remaining = await getImages();
@@ -136,7 +152,7 @@ server.listen(3000, () => {
 });
 
 async function getImages() {
-    return await fs.readdir("processed/");
+    return await fsp.readdir("processed/");
 }
 
 async function setCurrentImage(filename, b = true) {
@@ -144,13 +160,13 @@ async function setCurrentImage(filename, b = true) {
     currentImage = filename;
 
     const dirPath = path.join(__dirname, "data");
-    await fs.mkdir(dirPath, { recursive: true });
+    await fsp.mkdir(dirPath, { recursive: true });
     const filePath = path.join(dirPath, "currentImage.txt");
-    await fs.writeFile(filePath, filename);
+    await fsp.writeFile(filePath, filename);
 }
 
 async function loadACT(path) {
-    const buffer = await fs.readFile(path);
+    const buffer = await fsp.readFile(path);
     const palette = [];
     for (let i = 0; i < 256; i++) {
         const r = buffer[i * 3];
@@ -206,7 +222,7 @@ async function processImage(inputPath, outputPath, palette, fit) {
 
     const packed = pack(pixels, w, h);
 
-    await fs.writeFile(outputPath, packed);
+    await fsp.writeFile(outputPath, packed);
 }
 
 function rgbToEPD(r, g, b) {
