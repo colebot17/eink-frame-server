@@ -225,23 +225,23 @@ async function processImage(inputPath, outputPath, palette, fit) {
         }
     }
     
-    for (let i = 0; i < w * h; i += 2) {
-        const idx1 = i * 4;
-        const idx2 = (i + 1) * 4
+    // for (let i = 0; i < w * h; i += 2) {
+    //     const idx1 = i * 4;
+    //     const idx2 = (i + 1) * 4
 
-        const r1 = resData[idx1];
-        const g1 = resData[idx1 + 1];
-        const b1 = resData[idx1 + 2];
+    //     const r1 = resData[idx1];
+    //     const g1 = resData[idx1 + 1];
+    //     const b1 = resData[idx1 + 2];
 
-        const r2 = resData[idx2];
-        const g2 = resData[idx2 + 1];
-        const b2 = resData[idx2 + 2];
+    //     const r2 = resData[idx2];
+    //     const g2 = resData[idx2 + 1];
+    //     const b2 = resData[idx2 + 2];
 
-        const p1 = rgbToEPD(r1, g1, b1);
-        const p2 = rgbToEPD(r2, g2, b2);
+    //     const p1 = rgbToEPD(r1, g1, b1);
+    //     const p2 = rgbToEPD(r2, g2, b2);
 
-        pixels[i / 2] = (p1 << 4) | (p2 & 0x0F);
-    }
+    //     pixels[i / 2] = (p1 << 4) | (p2 & 0x0F);
+    // }
 
     await fsp.writeFile(outputPath, pixels);
 }
