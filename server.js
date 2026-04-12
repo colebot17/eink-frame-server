@@ -211,6 +211,19 @@ async function processImage(inputPath, outputPath, palette, fit) {
     const h = resInfo.height;
 
     const pixels = new Uint8Array(w * h / 2);
+    let pixIndex = 0;
+
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x += 2) {
+            const i1 = (y * w + x) * 4;
+            const i2 = (y * w + x + 1) * 4;
+
+            const p1 = rgbToEPD(data[i1], data[i1+1], data[i1+2]);
+            const p2 = rgbToEPD(data[i2], data[i2+1], data[i2+2]);
+
+            pixels[pixIndex++] = ((p1 & 0x0F) << 4) | (p2 & 0x0F);
+        }
+    }
     
     for (let i = 0; i < w * h; i += 2) {
         const idx1 = i * 4;
