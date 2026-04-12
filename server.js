@@ -43,9 +43,9 @@ app.post("/upload", upload.single("photo"), async (req, res) => {
         return res.status(400).json({ error: "No file uploaded" });
     }
 
-    await processImage(file.path, "processed/" + file.filename + ".bmp", await loadACT("color_profiles/6-color.act"), req.body.fit || "contain");
+    await processImage(file.path, "processed/" + file.filename + ".bin", await loadACT("color_profiles/6-color.act"), req.body.fit || "contain");
 
-    setCurrentImage(file.filename + ".bmp");
+    setCurrentImage(file.filename + ".bin");
 
     res.json({ message: "Upload Successful", filename: currentImage });
 });
@@ -189,6 +189,61 @@ async function processImage(inputPath, outputPath, palette, fit) {
         });
     });
 
-    const r = sharp(result).removeAlpha();
-    await bmp.sharpToBmp(r, outputPath);
+    const w = info.width;
+    const h = info.height;
+
+    const pixels = new Uint8Array(w * h);
+    
+    for (let i = 0; i < w * h; i++) {
+        const idx = i * 4;
+
+        const r = result[idx];
+        const g = result[idx + 1];
+        const b = result[idx + 2];
+
+        pixels[i] = rgbToEPD(r, g, b);
+    }
+
+    const packed = pack(pixels, w, h);
+
+    await fs.writeFile(outputPath, packed);
+}
+
+function rgbToEPD(r, g, b) {
+    // Simple nearest-color mapping (can improve later)
+
+    if (r < 50 && g < 50 && b < 50) return 0x0; // black
+    if (r > 200 && g > 200 && b > 200) return 0x1; // white
+
+    if (r > 200 && g > 200 && b < 100) return 0x2; // yellow
+    if (r > 200 && g < 100 && b < 100) return 0x3; // red
+    if (r < 100 && g < 100 && b > 200) return 0x5; // blue
+    if (r < 100 && g > 200 && b < 100) return 0x6; // green
+
+    return 0x1; // default white
+}
+
+function pack(pixels, width, height) {
+    const totalPixels = width * height;
+    const totalBits = totalPixels * 3;
+    const totalBytes = Math.ceil(totalBits / 8);
+
+    const output = Buffer.alloc(totalBytes);
+
+    let bitPos = 0;
+
+    for (let i = 0; i < totalPixels; i++) {
+        const value = pixels[i] & 0x07;
+
+        const byteIndex = Math.floor(bitPos / 8);
+        const bitOffset = bitPos % 8;
+
+        output[byteIndex] |= value << (5 - bitOffset);
+
+        if (bitOffset > 5) {
+            output[byteIndex + 1] |= value >> (bitOffset - 5);
+        }
+    }
+
+    return output;
 }
