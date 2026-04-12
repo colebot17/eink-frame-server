@@ -44,19 +44,22 @@ app.post("/upload", upload.single("photo"), async (req, res) => {
         return res.status(400).json({ error: "No file uploaded" });
     }
 
-    await processImage(file.path, "processed/" + file.filename + ".bin", await loadACT("color_profiles/6-color.act"), req.body.fit || "contain");
+    await processImage(file.path, file.filename, await loadACT("color_profiles/6-color.act"), req.body.fit || "contain");
 
-    setCurrentImage(file.filename + ".bin");
+    setCurrentImage(file.filename);
 
-    res.json({ message: "Upload Successful", filename: currentImage });
+    res.json({ message: "Upload Successful", id: currentImage, preview: "preview/" + currentImage + ".png" });
 });
 
 app.get("/current", (req, res) => {
-    res.json({ filename: currentImage });
+    res.json({
+        id: currentImage,
+        preview: "preview/" + currentImage + ".png"
+    });
 });
 
 app.get("/currentImage", async (req, res) => {
-    const filePath = "processed/" + currentImage;
+    const filePath = "processed/" + currentImage + ".bin";
 
     const stream = fs.createReadStream(filePath);
 
@@ -85,27 +88,28 @@ app.post("/delete", async (req, res) => {
             return res.status(400).json({ error: "Invalid filename" });
         }
 
-        await fsp.unlink("processed/" + req.body.filename);
+        await fsp.unlink("processed/" + req.body.id + ".bin");
+        await fsp.unlink("preview/" + req.body.id + ".png");
         
-        if (currentImage === req.body.filename) {
+        if (currentImage === req.body.id) {
             const remaining = await getImages();
-            setCurrentImage(remaining[Math.floor(Math.random() * remaining.length)]);
+            setCurrentImage(remaining[Math.floor(Math.random() * remaining.length)].split(".")[0]);
         }
     } catch (err) {
         console.error(err);
         return res.sendStatus(500);
     }
-    return res.json({ filename: currentImage });
+    return res.json({ id: currentImage, preview: "preview/" + currentImage + ".png" });
 });
 
 app.post("/select", async (req, res) => {
-    await setCurrentImage(req.body.filename);
-    res.json({ filename: currentImage });
+    await setCurrentImage(req.body.id);
+    res.json({ id: currentImage, preview: "preview/" + currentImage + ".png" });
 });
 
 app.get("/clear", async (req, res) => {
     await setCurrentImage("", false);
-    res.json({ filename: "" });
+    res.json({ id: "", preview: "" });
     broadcast({ type: "clear" });
 });
 
@@ -157,14 +161,14 @@ async function getImages() {
     return await fsp.readdir("processed/");
 }
 
-async function setCurrentImage(filename, b = true) {
-    if (b) broadcast({ type: "update", filename });
-    currentImage = filename;
+async function setCurrentImage(id, b = true) {
+    if (b) broadcast({ type: "update", id });
+    currentImage = id;
 
     const dirPath = path.join(__dirname, "data");
     await fsp.mkdir(dirPath, { recursive: true });
     const filePath = path.join(dirPath, "currentImage.txt");
-    await fsp.writeFile(filePath, filename);
+    await fsp.writeFile(filePath, id);
 }
 
 async function loadACT(path) {
@@ -188,7 +192,7 @@ async function loadACT(path) {
     return palette;
 }
 
-async function processImage(inputPath, outputPath, palette, fit) {
+async function processImage(inputPath, filename, palette, fit) {
     const { data, info } = await sharp(inputPath)
         .rotate()
         .resize(800, 480, { fit, background: { r: 255, g: 255, b: 255, alpha: 1} })
@@ -206,6 +210,8 @@ async function processImage(inputPath, outputPath, palette, fit) {
             if (code != 0) rej(new Error(`Worker stopped with code ${code}`));
         });
     });
+
+    await fsp.writeFile("preview/" + filename + ".png", result);
 
     const { data: resData, info: resInfo } = await sharp(result)
         .raw()
@@ -230,11 +236,11 @@ async function processImage(inputPath, outputPath, palette, fit) {
         }
     }
 
-    await fsp.writeFile(outputPath, pixels);
+    await fsp.writeFile("processed/" + filename + ".bin", pixels);
 }
 
 function rgbToEPD(r, g, b) {
-    // Simple nearest-color mapping (can improve later)
+    // Simple nearest-color mapping (dithering is already done)
 
     if (r < 50 && g < 50 && b < 50) return 0x0; // black
     if (r > 200 && g > 200 && b > 200) return 0x1; // white

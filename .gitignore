@@ -2,3 +2,4 @@ data/*
 uploads/*
 processed/*
 node_modules/*
+preview/*
