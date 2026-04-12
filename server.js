@@ -60,8 +60,10 @@ app.get("/currentImage", async (req, res) => {
 
     const stream = fs.createReadStream(filePath);
 
-    stream.on("open", () => {
+    stream.on("open", async () => {
         res.setHeader("Content-Type", "application/octet-stream");
+        const stat = await fsp.stat(filePath);
+        res.setHeader("Content-Length", stat.size);
         stream.pipe(res);
     });
 
@@ -205,7 +207,10 @@ async function processImage(inputPath, outputPath, palette, fit) {
         });
     });
 
-    const { data: resData, info: resInfo } = await sharp(result).raw().ensureAlpha().toBuffer({ resolveWithObject: true });
+    const { data: resData, info: resInfo } = await sharp(result)
+        .raw()
+        .ensureAlpha()
+        .toBuffer({ resolveWithObject: true });
 
     const w = resInfo.width;
     const h = resInfo.height;
@@ -224,24 +229,6 @@ async function processImage(inputPath, outputPath, palette, fit) {
             pixels[pixIndex++] = ((p1 & 0x0F) << 4) | (p2 & 0x0F);
         }
     }
-    
-    // for (let i = 0; i < w * h; i += 2) {
-    //     const idx1 = i * 4;
-    //     const idx2 = (i + 1) * 4
-
-    //     const r1 = resData[idx1];
-    //     const g1 = resData[idx1 + 1];
-    //     const b1 = resData[idx1 + 2];
-
-    //     const r2 = resData[idx2];
-    //     const g2 = resData[idx2 + 1];
-    //     const b2 = resData[idx2 + 2];
-
-    //     const p1 = rgbToEPD(r1, g1, b1);
-    //     const p2 = rgbToEPD(r2, g2, b2);
-
-    //     pixels[i / 2] = (p1 << 4) | (p2 & 0x0F);
-    // }
 
     await fsp.writeFile(outputPath, pixels);
 }
