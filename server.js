@@ -220,9 +220,7 @@ async function processImage(inputPath, outputPath, palette, fit) {
         pixels[i] = rgbToEPD(r, g, b);
     }
 
-    const packed = pack(pixels, w, h);
-
-    await fsp.writeFile(outputPath, packed);
+    await fsp.writeFile(outputPath, pixels);
 }
 
 function rgbToEPD(r, g, b) {
@@ -237,29 +235,4 @@ function rgbToEPD(r, g, b) {
     if (r < 100 && g > 200 && b < 100) return 0x6; // green
 
     return 0x1; // default white
-}
-
-function pack(pixels, width, height) {
-    const totalPixels = width * height;
-    const totalBits = totalPixels * 3;
-    const totalBytes = Math.ceil(totalBits / 8);
-
-    const output = Buffer.alloc(totalBytes);
-
-    let bitPos = 0;
-
-    for (let i = 0; i < totalPixels; i++) {
-        const value = pixels[i] & 0x07;
-
-        const byteIndex = Math.floor(bitPos / 8);
-        const bitOffset = bitPos % 8;
-
-        output[byteIndex] |= value << (5 - bitOffset);
-
-        if (bitOffset > 5) {
-            output[byteIndex + 1] |= value >> (bitOffset - 5);
-        }
-    }
-
-    return output;
 }
