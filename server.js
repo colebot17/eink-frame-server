@@ -205,17 +205,19 @@ async function processImage(inputPath, outputPath, palette, fit) {
         });
     });
 
-    const w = info.width;
-    const h = info.height;
+    const { data: resData, info: resInfo } = await sharp(result).raw().ensureAlpha().toBuffer({ resolveWithObject: true });
+
+    const w = resInfo.width;
+    const h = resInfo.height;
 
     const pixels = new Uint8Array(w * h);
     
     for (let i = 0; i < w * h; i++) {
         const idx = i * 4;
 
-        const r = result[idx];
-        const g = result[idx + 1];
-        const b = result[idx + 2];
+        const r = resData[idx];
+        const g = resData[idx + 1];
+        const b = resData[idx + 2];
 
         pixels[i] = rgbToEPD(r, g, b);
     }
