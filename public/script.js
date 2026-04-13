@@ -1,9 +1,10 @@
 // connect to websocket
 const socket = new WebSocket("ws://184.174.134.74:3000");
 socket.addEventListener("message", e => {
-    switch (e.data.type) {
+    const m = JSON.parse(e.data);
+    switch (m.type) {
         case "update":
-            setPreview(e.data.preview);
+            setPreview(m.preview);
             break;
         case "clear":
             setPreview("");
