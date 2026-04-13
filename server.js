@@ -146,7 +146,15 @@ wss.on("connection", ws => {
 });
 
 app.get("/connections", (req, res) => {
-    res.json({ count: clients.size });
+    let numClients = 0;
+
+    for (const ws of clients) {
+        if (ws.readyState == WebSocket.OPEN) {
+            numClients++;
+        }
+    }
+
+    res.json({ count: numClients });
 });
 
 function broadcast(data) {
