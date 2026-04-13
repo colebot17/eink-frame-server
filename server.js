@@ -128,6 +128,8 @@ wss.on("connection", ws => {
     console.log("Websocket Connected");
     clients.add(ws);
 
+    ws.isAlive = true;
+
     ws.on("pong", () => {
         ws.isAlive = true;
     })
