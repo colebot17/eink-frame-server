@@ -138,8 +138,12 @@ wss.on("connection", ws => {
     });
 
     ws.on("message", data => {
-        console.log("GOT MESSAGE FROM CLIENT");
-        broadcast({ "type": "complete" });
+        const msg = JSON.parse(data.toString());
+        if (msg.type == "complete") {
+            broadcast({ "type": "complete" });
+        } else {
+            console.log("Received unknown message from client:", msg);
+        }
     });
 });
 
