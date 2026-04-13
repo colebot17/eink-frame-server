@@ -35,11 +35,9 @@ async function setMode(mode) {
         }
     }
 
-    const formData = new FormData();
-    formData.set("mode", mode);
     await fetch("/setMode", {
         method: "POST",
-        body: formData
+        body: JSON.stringify({ mode })
     });
 
     switch (mode) {

@@ -62,7 +62,7 @@ app.post("/setMode", async (req, res) => {
         case "blank":
             break;
     }
-})
+});
 
 // upload.single("photo") tells multer to intercept the "photo" field and store it in "uploads/" (set above)
 app.post("/upload", upload.single("photo"), async (req, res) => {
