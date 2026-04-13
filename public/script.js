@@ -1,3 +1,19 @@
+// connect to websocket
+const socket = new WebSocket("ws://184.174.134.74:3000");
+socket.addEventListener("message", e => {
+    switch (e.data.type) {
+        case "update":
+            setPreview(e.data.preview);
+            break;
+        case "clear":
+            setPreview("");
+            break;
+        case "complete":
+            alert("Finished updating");
+            break;
+    }
+});
+
 // handle form submission
 const form = document.getElementById("upload-form");
 form.addEventListener("submit", async e => {
