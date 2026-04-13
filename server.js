@@ -43,7 +43,7 @@ app.post("/upload", upload.single("photo"), async (req, res) => {
         return res.status(400).json({ error: "No file uploaded" });
     }
 
-    await processImage(file.path, file.filename, await loadACT("color_profiles/6-color.act"), req.body.fit || "contain");
+    await processImage(file.path, file.filename, await loadACT(req.body.color == "bw" ? "color_profiles/Black-White.act" : "color_profiles/6-color.act"), req.body.fit || "contain");
 
     setCurrentImage(file.filename);
 

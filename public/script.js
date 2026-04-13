@@ -20,6 +20,7 @@ async function submitFile() {
     const formData = new FormData();
     formData.set("photo", file);
     formData.set("fit", document.getElementById("fit-input").value);
+    formData.set("color", document.getElementById("color-input").value);
 
     const processingLabel = document.getElementById("processing-label");
     const fileInputForm = document.getElementById("upload-form");
