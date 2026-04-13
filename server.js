@@ -144,7 +144,7 @@ wss.on("connection", ws => {
     });
 
     ws.on("message", data => {
-        const { complete } = JSON.parse(data);
+        const { complete } = JSON.parse(data.toString());
         if (complete) {
             broadcast({ "type": "complete" });
         }
