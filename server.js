@@ -43,7 +43,13 @@ app.post("/upload", upload.single("photo"), async (req, res) => {
         return res.status(400).json({ error: "No file uploaded" });
     }
 
-    await processImage(file.path, file.filename, await loadACT(req.body.color == "bw" ? "color_profiles/Black-White.act" : "color_profiles/6-color.act"), req.body.fit || "contain");
+    await processImage(
+        file.path,
+        file.filename,
+        await loadACT(req.body.color == "bw" ? "color_profiles/Black-White.act" : "color_profiles/6-color.act"),
+        req.body.fit || "contain",
+        req.body.background == "black" ? { r: 0, g: 0, b: 0, alpha: 1 } : { r: 255, g: 255, b: 255, alpha: 1}
+    );
 
     setCurrentImage(file.filename);
 
@@ -240,10 +246,10 @@ async function loadACT(path) {
     return palette;
 }
 
-async function processImage(inputPath, filename, palette, fit) {
+async function processImage(inputPath, filename, palette, fit, background) {
     const { data, info } = await sharp(inputPath)
         .rotate()
-        .resize(800, 480, { fit, background: { r: 255, g: 255, b: 255, alpha: 1} })
+        .resize(800, 480, { fit, background })
         .ensureAlpha()
         .png()
         .toBuffer({ resolveWithObject: true });
