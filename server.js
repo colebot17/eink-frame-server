@@ -128,6 +128,8 @@ wss.on("connection", ws => {
     console.log("Websocket Connected");
     clients.add(ws);
 
+    ws.updating = false;
+
     ws.on("close", () => {
         console.log("Websocket Disconnected");
         clients.delete(ws);
@@ -139,10 +141,21 @@ wss.on("connection", ws => {
 
     ws.on("message", data => {
         const msg = JSON.parse(data.toString());
-        if (msg.type == "complete") {
-            broadcast({ "type": "complete" });
-        } else {
-            console.log("Received unknown message from client:", msg);
+        switch (msg.type) {
+            case "updateBegin":
+                ws.updating = true;
+                break;
+            case "updateComplete":
+                let allUpdated = true;
+                for (const s of clients) {
+                    if (s.updating) {
+                        allUpdated = false;
+                    }
+                }
+                if (allUpdated) broadcast({ "type": "updateComplete" });
+                break;
+            default:
+                console.log("Received unknown message from client:", msg);
         }
     });
 });

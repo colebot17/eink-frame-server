@@ -9,8 +9,8 @@ socket.addEventListener("message", e => {
         case "clear":
             setPreview("");
             break;
-        case "complete":
-            alert("Finished updating");
+        case "updateComplete":
+            document.getElementById("updating-label").style.display = "none";
             break;
     }
 });
