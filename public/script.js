@@ -17,20 +17,26 @@ socket.addEventListener("message", e => {
     }
 });
 
-// handle form submission
-const form = document.getElementById("upload-form");
-form.addEventListener("submit", async e => {
-    e.preventDefault();
+const fileInput = document.getElementById("file-input");
+fileInput.addEventListener("change", () => {
+    document.getElementById("confirm-upload-dialog").showModal();
 });
 
-const fileInput = document.getElementById("file-input");
-fileInput.addEventListener("change", () => submitFile());
+const fileSubmitButton = document.getElementById("file-submit-button");
+fileSubmitButton.addEventListener("click", () => submitFile());
+
+const submitCancelButton = document.getElementById("submit-cancel-button");
+submitCancelButton.addEventListener("click", () => {
+    document.getElementById("confirm-upload-dialog").close();
+});
 
 const clearDisplayButton = document.getElementById("clear-display-button");
 clearDisplayButton.addEventListener("click", () => clearDisplay());
 
 async function submitFile() {
     document.getElementById("preview").src = "";
+    
+    document.getElementById("confirm-upload-dialog").close();
 
     const file = fileInput.files[0];
 
@@ -43,9 +49,7 @@ async function submitFile() {
     formData.set("background", document.getElementById("background-input").value);
 
     const processingLabel = document.getElementById("processing-label");
-    const fileInputForm = document.getElementById("upload-form");
     processingLabel.style.display = "";
-    fileInputForm.style.display = "none";
 
     try {
         const res = await fetch("/upload", {
@@ -54,7 +58,6 @@ async function submitFile() {
         });
         const { id, preview } = await res.json();
         processingLabel.style.display = "none";
-        fileInputForm.style.display = "";
         setPreview(preview);
         addPreview(document.getElementById("preview-container"), id, preview);
     } catch (err) {
