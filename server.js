@@ -20,8 +20,7 @@ const upload = multer({ dest: "uploads/" });
 app.use(express.static("public"));
 
 app.use("/image", express.static("processed"));
-
-app.use("/client", express.static("client"));
+app.use("/preview", express.static("preview"));
 
 app.use(express.json());
 
@@ -52,10 +51,14 @@ app.post("/upload", upload.single("photo"), async (req, res) => {
 });
 
 app.get("/current", (req, res) => {
-    res.json({
-        id: currentImage,
-        preview: "preview/" + currentImage + ".png"
-    });
+    if (currentImage) {
+        res.json({
+            id: currentImage,
+            preview: "preview/" + currentImage + ".png"
+        });
+    } else {
+        res.json({ id: "", preview: "" });
+    }
 });
 
 app.get("/currentImage", async (req, res) => {
@@ -77,23 +80,25 @@ app.get("/currentImage", async (req, res) => {
 
 app.get("/all", async (req, res) => {
     const files = await getImages();
-    res.json({ files });
+    const toReturn = files.map(filename => ({
+        id: filename.split(".")[0],
+        preview: "/preview/" + filename.split(".")[0] + ".png"
+    }));
+    res.json(toReturn);
 });
 
 app.post("/delete", async (req, res) => {
     try {
-        const images = await getImages(); // valid filenames
-
-        if (!images.includes(req.body.filename)) {
-            return res.status(400).json({ error: "Invalid filename" });
-        }
-
         await fsp.unlink("processed/" + req.body.id + ".bin");
         await fsp.unlink("preview/" + req.body.id + ".png");
         
         if (currentImage === req.body.id) {
             const remaining = await getImages();
-            setCurrentImage(remaining[Math.floor(Math.random() * remaining.length)].split(".")[0]);
+            if (!remaining.length) {
+                setCurrentImage("");
+            } else {
+                setCurrentImage(remaining[Math.floor(Math.random() * remaining.length)].split(".")[0]);
+            }
         }
     } catch (err) {
         console.error(err);
@@ -108,19 +113,8 @@ app.post("/select", async (req, res) => {
 });
 
 app.get("/clear", async (req, res) => {
-    await setCurrentImage("", false);
+    await setCurrentImage("");
     res.json({ id: "", preview: "" });
-    broadcast({ type: "clear" });
-});
-
-app.post("/setWifi", async (req, res) => {
-    broadcast({ type: "setWifi", networks: req.body });
-    res.sendStatus(200);
-});
-
-app.get("/ota", async (req, res) => {
-    broadcast({ type: "ota" });
-    res.sendStatus(200);
 });
 
 const server = http.createServer(app);
@@ -162,7 +156,13 @@ async function getImages() {
 }
 
 async function setCurrentImage(id, b = true) {
-    if (b) broadcast({ type: "update", id });
+    if (b) {
+        if (id) {
+            broadcast({ type: "update", id });
+        } else {
+            broadcast({ type: "clear" });
+        }
+    }
     currentImage = id;
 
     const dirPath = path.join(__dirname, "data");

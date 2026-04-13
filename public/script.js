@@ -18,8 +18,8 @@ async function submitFile() {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append("photo", file);
-    formData.append("fit", document.getElementById("fit-input").value);
+    formData.set("photo", file);
+    formData.set("fit", document.getElementById("fit-input").value);
 
     const processingLabel = document.getElementById("processing-label");
     const fileInputForm = document.getElementById("upload-form");
@@ -31,11 +31,11 @@ async function submitFile() {
             method: "POST",
             body: formData
         });
-        const { filename } = await res.json();
+        const { id, preview } = await res.json();
         processingLabel.style.display = "none";
         fileInputForm.style.display = "";
-        setPreview(filename);
-        addPreview(document.getElementById("preview-container"), filename);
+        setPreview(preview);
+        addPreview(document.getElementById("preview-container"), id, preview);
     } catch (err) {
         processingLabel.style.display = "none";
         const errorEl = document.getElementById("error");
@@ -46,40 +46,40 @@ async function submitFile() {
 
 async function clearDisplay() {
     const res = await fetch("/clear", { method: "GET" });
-    const { filename } = await res.json();
-    setPreview(filename);
+    const { preview } = await res.json();
+    setPreview(preview);
 }
 
 // load initial image preview
 async function loadPreview() {
     const res = await fetch("/current");
-    const { filename } = await res.json();
-    setPreview(filename);
+    const { id, preview } = await res.json();
+    setPreview(preview);
 }
 loadPreview();
 
 async function loadPreviews() {
     const res = await fetch("/all");
-    const { files } = await res.json();
+    const images = await res.json();
     const container = document.getElementById("preview-container");
     container.innerHTML = "";
-    for (let i = 0; i < files.length; i++) {
-        addPreview(container, files[i]);
+    for (let i = 0; i < images.length; i++) {
+        addPreview(container, images[i].id, images[i].preview);
     }
 
-    if (files.length === 0) {
+    if (images.length === 0) {
         container.innerHTML = "<i>No images yet</i>";
     }
 }
 loadPreviews();
 
-function addPreview(container, filename) {
+function addPreview(container, id, path) {
     const div = document.createElement("div");
     div.className = "preview-image";
     container.appendChild(div);
 
     const img = document.createElement("img");
-    img.src = "/image/" + filename;
+    img.src = path;
     img.width = 400;
     div.appendChild(img);
 
@@ -96,13 +96,11 @@ function addPreview(container, filename) {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                filename
-            })
+            body: JSON.stringify({ id })
         });
-        const { filename: fn } = await res.json();
+        const { preview: pv } = await res.json();
         div.remove();
-        setPreview(fn);
+        setPreview(pv);
     });
     deleteBtn.innerHTML = "Delete";
     previewBtnContainer.appendChild(deleteBtn);
@@ -115,59 +113,19 @@ function addPreview(container, filename) {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ filename })
+            body: JSON.stringify({ id })
         });
-        const { filename: fn } = await res.json();
-        setPreview(fn);
+        const { preview: pv } = await res.json();
+        setPreview(pv);
     });
     selectBtn.innerHTML = "Select";
     previewBtnContainer.appendChild(selectBtn);
 }
 
-function setPreview(filename) {
-    if (filename) {
-        document.getElementById("preview").src = "/image/" + filename;
+function setPreview(path) {
+    if (path) {
+        document.getElementById("preview").src = path;
     } else {
         document.getElementById("preview").src = "";
-    }
-}
-
-document.getElementById("wifi-config-button").addEventListener("click", () => wifiConfig());
-
-async function wifiConfig() {
-    const networks = [];
-    do {
-        const ssid = prompt("Enter the wifi SSID:");
-        if (!ssid) break;
-        const password = prompt("Enter the wifi password:");
-        if (password === undefined) break;
-        networks.push({ ssid, password });
-    } while (confirm("Would you like to add another network?"));
-
-    if (networks.length > 0 || confirm("No networks were added. Really remove all networks?")) {
-        const res = await fetch("/setWifi", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(networks)
-        });
-
-        if (res.ok) {
-            alert("Wi-Fi set");
-        } else {
-            alert("Error setting Wi-Fi");
-        }
-    }
-}
-
-document.getElementById("ota-button").addEventListener("click", () => otaUpdate());
-
-async function otaUpdate() {
-    const res = await fetch("/ota", { method: "GET" });
-    if (res.ok) {
-        alert("OTA sent");
-    } else {
-        alert("Error sending OTA");
     }
 }
