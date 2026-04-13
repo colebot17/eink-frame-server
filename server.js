@@ -144,23 +144,34 @@ wss.on("connection", ws => {
         switch (msg.type) {
             case "updateBegin":
                 ws.updating = true;
+                ws.updateTimeout = setTimeout(() => {
+                    ws.updating = false;
+                    broadcastUpdateCompleteIfAllComplete();
+                }, 90000);
                 break;
             case "updateComplete":
-                ws.updating = false;
-
-                let allUpdated = true;
-                for (const s of clients) {
-                    if (s.updating) {
-                        allUpdated = false;
-                    }
+                clearTimeout(ws.updateTimeout);
+                if (ws.updating) {
+                    ws.updating = false;
+                    broadcastUpdateCompleteIfAllComplete();
                 }
-                if (allUpdated) broadcast({ "type": "updateComplete" });
                 break;
             default:
                 console.log("Received unknown message from client:", msg);
         }
     });
 });
+
+function broadcastUpdateCompleteIfAllComplete() {
+    let allComplete = true;
+    for (const s of clients) {
+        if (s.updating) {
+            allComplete = false;
+            break;
+        }
+    }
+    if (allComplete) broadcast({ "type": "updateComplete" });
+}
 
 app.get("/connections", (req, res) => {
     let numClients = 0;
