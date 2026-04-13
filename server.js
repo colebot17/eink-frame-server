@@ -250,7 +250,7 @@ async function processImage(inputPath, filename, palette, fit, background) {
     const { data, info } = await sharp(inputPath)
         .rotate()
         .resize(800, 480, { fit, background })
-        .ensureAlpha()
+        .flatten({ background })
         .png()
         .toBuffer({ resolveWithObject: true });
 
