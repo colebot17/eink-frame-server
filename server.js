@@ -128,12 +128,6 @@ wss.on("connection", ws => {
     console.log("Websocket Connected");
     clients.add(ws);
 
-    ws.isAlive = true;
-
-    ws.on("pong", () => {
-        ws.isAlive = true;
-    })
-
     ws.on("close", () => {
         console.log("Websocket Disconnected");
         clients.delete(ws);
@@ -148,19 +142,6 @@ wss.on("connection", ws => {
         broadcast({ "type": "complete" });
     });
 });
-
-setInterval(() => {
-    for (const ws of clients) {
-        if (!ws.isAlive) {
-            ws.terminate();
-            clients.delete(ws);
-            continue;
-        }
-
-        ws.isAlive = false;
-        ws.ping();
-    }
-}, 15000);
 
 app.get("/connections", (req, res) => {
     let numClients = 0;
