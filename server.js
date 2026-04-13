@@ -36,6 +36,34 @@ async function loadCurrentImage() {
 }
 loadCurrentImage();
 
+let currentColor = null;
+async function loadCurrentColor() {
+    try {
+        currentColor = await fsp.readFile("data/currentColor.txt", "utf8");
+    } catch {
+        console.log("Current color was not loaded from file");
+    }
+}
+
+let mode = "static";
+async function loadMode() {
+    try {
+        mode = await fsp.readFile("data/mode.txt", "utf8");
+    } catch {
+        console.log("Mode not loaded from file");
+    }
+}
+loadMode();
+
+app.post("/setMode", async (req, res) => {
+    switch (req.body.mode) {
+        case "static":
+            break;
+        case "blank":
+            break;
+    }
+})
+
 // upload.single("photo") tells multer to intercept the "photo" field and store it in "uploads/" (set above)
 app.post("/upload", upload.single("photo"), async (req, res) => {
     const file = req.file;
@@ -57,32 +85,46 @@ app.post("/upload", upload.single("photo"), async (req, res) => {
 });
 
 app.get("/current", (req, res) => {
-    if (currentImage) {
-        res.json({
-            id: currentImage,
-            preview: "preview/" + currentImage + ".png"
-        });
+    if (mode == "blank") {
+        if (currentColor != null) {
+            res.json({ mode: "blank", color: currentColor });
+        } else {
+            res.json({ mode: "blank", color: 0x1 });
+        }
     } else {
-        res.json({ id: "", preview: "" });
+        if (currentImage) {
+            res.json({
+                id: currentImage,
+                preview: "preview/" + currentImage + ".png"
+            });
+        } else {
+            res.json({ id: "", preview: "" });
+        }
     }
 });
 
 app.get("/currentImage", async (req, res) => {
-    const filePath = "processed/" + currentImage + ".bin";
+    if (mode == "blank") {
+        // send the raw clear color in a special byte
+        const col = currentColor != null ? currentColor : 0x1;
+        res.status(200).send(Buffer.from([col]));
+    } else {
+        const filePath = "processed/" + currentImage + ".bin";
 
-    const stream = fs.createReadStream(filePath);
+        const stream = fs.createReadStream(filePath);
 
-    stream.on("open", async () => {
-        res.setHeader("Content-Type", "application/octet-stream");
-        const stat = await fsp.stat(filePath);
-        res.setHeader("Content-Length", stat.size);
-        stream.pipe(res);
-    });
+        stream.on("open", async () => {
+            res.setHeader("Content-Type", "application/octet-stream");
+            const stat = await fsp.stat(filePath);
+            res.setHeader("Content-Length", stat.size);
+            stream.pipe(res);
+        });
 
-    stream.on("error", () => {
-        res.status(404).send("Image not found");
-    });
-})
+        stream.on("error", () => {
+            res.status(404).send("Image not found");
+        });
+    }
+});
 
 app.get("/all", async (req, res) => {
     const files = await getImages();
@@ -101,7 +143,7 @@ app.post("/delete", async (req, res) => {
         if (currentImage === req.body.id) {
             const remaining = await getImages();
             if (!remaining.length) {
-                setCurrentImage("");
+                setCurrentImage(null);
             } else {
                 setCurrentImage(remaining[Math.floor(Math.random() * remaining.length)].split(".")[0]);
             }
@@ -116,11 +158,6 @@ app.post("/delete", async (req, res) => {
 app.post("/select", async (req, res) => {
     await setCurrentImage(req.body.id);
     res.json({ id: currentImage, preview: "preview/" + currentImage + ".png" });
-});
-
-app.get("/clear", async (req, res) => {
-    await setCurrentImage("");
-    res.json({ id: "", preview: "" });
 });
 
 

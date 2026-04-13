@@ -13,6 +13,18 @@ h1 {
     font-family: 'Fascinate', system-ui;
 }
 
+#mode-selector {
+    display: inline-flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.mode-button.set {
+    color: white;
+    background-color: black;
+    font-weight: bold;
+}
+
 #file-input-label {
     text-decoration: underline;
 }

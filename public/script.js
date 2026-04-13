@@ -17,6 +17,40 @@ socket.addEventListener("message", e => {
     }
 });
 
+// mode buttons
+const modeButtons = document.getElementsByClassName("mode-button");
+for (const el of modeButtons) {
+    el.addEventListener("click", () => {
+        setMode(el.dataset.mode);
+    });
+}
+
+async function setMode(mode) {
+    const btns = document.getElementsByClassName("mode-button");
+    for (const btn of btns) {
+        if (btn.dataset.mode == mode) {
+            btn.classList.add("set");
+        } else {
+            btn.classList.remove("set");
+        }
+    }
+
+    const formData = new FormData();
+    formData.set("mode", mode);
+    await fetch("/setMode", {
+        method: "POST",
+        body: formData
+    });
+
+    switch (mode) {
+        case "static":
+        // case "cycle":
+        case "blank":
+        // case "text":
+            break;
+    }
+}
+
 const fileInput = document.getElementById("file-input");
 fileInput.addEventListener("change", () => {
     document.getElementById("confirm-upload-dialog").showModal();
