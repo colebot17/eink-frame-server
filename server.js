@@ -139,7 +139,7 @@ wss.on("connection", ws => {
 });
 
 app.get("/connections", (req, res) => {
-    res.json(clients);
+    res.json({count: clients.length});
 });
 
 function broadcast(data) {
