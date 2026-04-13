@@ -117,6 +117,7 @@ app.get("/clear", async (req, res) => {
     res.json({ id: "", preview: "" });
 });
 
+
 const server = http.createServer(app);
 
 const wss = new WebSocket.Server({ server });
@@ -135,6 +136,10 @@ wss.on("connection", ws => {
     ws.on("error", () => {
         ws.close();
     });
+});
+
+app.get("/connections", (req, res) => {
+    res.json(clients);
 });
 
 function broadcast(data) {
