@@ -146,6 +146,8 @@ wss.on("connection", ws => {
                 ws.updating = true;
                 break;
             case "updateComplete":
+                ws.updating = false;
+
                 let allUpdated = true;
                 for (const s of clients) {
                     if (s.updating) {
