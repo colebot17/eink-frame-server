@@ -5,9 +5,11 @@ socket.addEventListener("message", e => {
     switch (m.type) {
         case "update":
             setPreview(m.preview);
+            document.getElementById("updating-label").style.display = "";
             break;
         case "clear":
             setPreview("");
+            document.getElementById("updating-label").style.display = "";
             break;
         case "updateComplete":
             document.getElementById("updating-label").style.display = "none";
