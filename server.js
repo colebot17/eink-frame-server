@@ -136,6 +136,13 @@ wss.on("connection", ws => {
     ws.on("error", () => {
         ws.close();
     });
+
+    ws.on("message", data => {
+        const { complete } = JSON.parse(data);
+        if (complete) {
+            broadcast({ "type": "complete" });
+        }
+    });
 });
 
 app.get("/connections", (req, res) => {
@@ -163,7 +170,7 @@ async function getImages() {
 async function setCurrentImage(id, b = true) {
     if (b) {
         if (id) {
-            broadcast({ type: "update", id });
+            broadcast({ type: "update", id, preview: "/preview/" + id + ".png" });
         } else {
             broadcast({ type: "clear" });
         }
