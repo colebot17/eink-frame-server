@@ -57,6 +57,7 @@ loadMode();
 
 app.post("/setMode", async (req, res) => {
     mode = req.body.mode;
+    broadcast({ "type": "modeChange" });
 
     switch (req.body.mode) {
         case "static":
