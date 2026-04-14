@@ -140,7 +140,7 @@ app.get("/currentImage", async (req, res) => {
     if (mode == "blank") {
         // send the raw clear color in a special byte
         const col = currentColor != null ? currentColor : 0x1;
-        const byte = 0xF0 & col;
+        const byte = 0xF0 | (col & 0x0F);
         res.status(200).send(Buffer.from([byte]));
     } else {
         const filePath = "processed/" + currentImage + ".bin";
