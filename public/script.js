@@ -65,9 +65,6 @@ submitCancelButton.addEventListener("click", () => {
     document.getElementById("confirm-upload-dialog").close();
 });
 
-const clearDisplayButton = document.getElementById("clear-display-button");
-clearDisplayButton.addEventListener("click", () => clearDisplay());
-
 async function submitFile() {
     document.getElementById("preview").src = "";
     
