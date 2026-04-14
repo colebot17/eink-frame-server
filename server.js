@@ -56,6 +56,8 @@ async function loadMode() {
 loadMode();
 
 app.post("/setMode", async (req, res) => {
+    mode = req.body.mode;
+
     switch (req.body.mode) {
         case "static":
             break;
