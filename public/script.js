@@ -37,6 +37,9 @@ async function setMode(mode) {
 
     await fetch("/setMode", {
         method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
         body: JSON.stringify({ mode })
     });
 
@@ -98,12 +101,6 @@ async function submitFile() {
         errorEl.style.display = "";
         errorEl.innerHTML = "An error occurred:<br>" + err;
     }
-}
-
-async function clearDisplay() {
-    const res = await fetch("/clear", { method: "GET" });
-    const { preview } = await res.json();
-    setPreview(preview);
 }
 
 // load initial image preview
