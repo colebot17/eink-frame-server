@@ -12,6 +12,15 @@ const WebSocket = require("ws");
 const { Worker } = require("worker_threads");
 const path = require("path");
 
+const COLORS = {
+    "black": 0x0,
+    "white": 0x1,
+    "yellow": 0x2,
+    "red": 0x3,
+    "blue": 0x5,
+    "green": 0x6
+};
+
 const app = express();
 app.use(cors());
 
@@ -39,11 +48,12 @@ loadCurrentImage();
 let currentColor = null;
 async function loadCurrentColor() {
     try {
-        currentColor = await fsp.readFile("data/currentColor.txt", "utf8");
+        currentColor = COLORS[await fsp.readFile("data/currentColor.txt", "utf8")];
     } catch {
         console.log("Current color was not loaded from file");
     }
 }
+loadCurrentColor();
 
 let mode = "static";
 async function loadMode() {
@@ -55,19 +65,39 @@ async function loadMode() {
 }
 loadMode();
 
-app.post("/setMode", async (req, res) => {
-    mode = req.body.mode;
+async function setMode(m) {
+    mode = m;
+    
     broadcast({ "type": "modeChange" });
 
-    switch (req.body.mode) {
-        case "static":
-            break;
-        case "blank":
-            break;
-    }
+    const dirPath = path.join(__dirname, "data");
+    await fsp.mkdir(dirPath, { recursive: true });
+    const filePath = path.join(dirPath, "mode.txt");
+    await fsp.writeFile(filePath, mode);
+}
+
+app.post("/setMode", async (req, res) => {
+    setMode(req.body.mode);
+    return res.status(200);
 });
 
-// upload.single("photo") tells multer to intercept the "photo" field and store it in "uploads/" (set above)
+async function setCurrentColor(colorName) {
+    currentColor = COLORS[colorName];
+
+    broadcast({ "type": "update" });
+
+    const dirPath = path.join(__dirname, "data");
+    await fsp.mkdir(dirPath, { recursive: true });
+    const filePath = path.join(dirPath, "currentColor.txt");
+    await fsp.writeFile(filePath, colorName);
+}
+
+app.post("/setColor", async (req, res) => {
+    setCurrentColor(req.body.color);
+    return res.status(200);
+});
+
+//                  tells multer to intercept the "photo" field and store it in "uploads/" (set above)
 app.post("/upload", upload.single("photo"), async (req, res) => {
     const file = req.file;
     if (!file) {
@@ -92,7 +122,7 @@ app.get("/current", (req, res) => {
         if (currentColor != null) {
             res.json({ mode: "blank", color: currentColor });
         } else {
-            res.json({ mode: "blank", color: 0x1 });
+            res.json({ mode: "blank", color: 0x1 /* white */ });
         }
     } else {
         if (currentImage) {
@@ -110,7 +140,8 @@ app.get("/currentImage", async (req, res) => {
     if (mode == "blank") {
         // send the raw clear color in a special byte
         const col = currentColor != null ? currentColor : 0x1;
-        res.status(200).send(Buffer.from([col]));
+        const byte = 0xF0 & col;
+        res.status(200).send(Buffer.from([byte]));
     } else {
         const filePath = "processed/" + currentImage + ".bin";
 
