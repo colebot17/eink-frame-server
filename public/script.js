@@ -35,6 +35,15 @@ async function setMode(mode) {
         }
     }
 
+    const pages = document.getElementsByClassName("mode-page");
+    for (const page of pages) {
+        if (page.dataset.mode == mode) {
+            page.style.display = "";
+        } else {
+            page.style.display = "none";
+        }
+    }
+
     await fetch("/setMode", {
         method: "POST",
         headers: {
@@ -42,14 +51,6 @@ async function setMode(mode) {
         },
         body: JSON.stringify({ mode })
     });
-
-    switch (mode) {
-        case "static":
-        // case "cycle":
-        case "blank":
-        // case "text":
-            break;
-    }
 }
 
 const fileInput = document.getElementById("file-input");
@@ -179,3 +180,15 @@ function setPreview(path) {
         document.getElementById("preview").src = "";
     }
 }
+
+const ccSelector = document.getElementById("current-color-selector");
+ccSelector.addEventListener("change", async () => {
+    const color = ccSelector.value;
+    await fetch("/setColor", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ color })
+    });
+});

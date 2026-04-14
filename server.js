@@ -84,7 +84,7 @@ app.post("/setMode", async (req, res) => {
 async function setCurrentColor(colorName) {
     currentColor = COLORS[colorName];
 
-    broadcast({ "type": "update" });
+    if (mode == "blank") broadcast({ "type": "update" });
 
     const dirPath = path.join(__dirname, "data");
     await fsp.mkdir(dirPath, { recursive: true });
@@ -280,8 +280,8 @@ async function getImages() {
     return await fsp.readdir("processed/");
 }
 
-async function setCurrentImage(id, b = true) {
-    if (b) {
+async function setCurrentImage(id) {
+    if (mode == "static") {
         if (id) {
             broadcast({ type: "update", id, preview: "/preview/" + id + ".png" });
         } else {

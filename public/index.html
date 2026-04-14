@@ -21,41 +21,56 @@
         <!-- <button class="mode-button" data-mode="text">Text</button> -->
     </div>
 
-    <br><br>
-
-    <label for="file-input" id="file-input-label">Upload Image</label>
-    <input id="file-input" type="file" name="photo" accept="image/*">
-    <br>
-    <span id="error" style="display:none"></span>
-    <br>
-    <img src="" id="preview">
-    <span id="processing-label" style="display:none">Processing...<br></span>
-    <span id="updating-label" style="display:none"><br><br>Display(s) Updating...<br></span>
-    <h2>Uploaded Images</h2>
-    <div id="preview-container"></div>
-    <br>
-
-    <dialog id="confirm-upload-dialog">
-        <h1>Upload Image</h1>
-        <div id="image-upload-options">
-        <select id="fit-input" name="fit">
-            <option value="contain">Contain</option>
-            <option value="cover">Cover</option>
-        </select>
+    <div class="mode-page" data-mode="static">
+        <br><br>
+        <label for="file-input" id="file-input-label">Upload Image</label>
+        <input id="file-input" type="file" name="photo" accept="image/*">
         <br>
-        <select id="color-input" name="color">
-            <option value="color">Color</option>
-            <option value="bw">B&W</option>
-        </select>
+        <span id="error" style="display:none"></span>
         <br>
-        <select id="background-input" name="background">
+        <img src="" id="preview">
+        <span id="processing-label" style="display:none">Processing...<br></span>
+        <span id="updating-label" style="display:none"><br><br>Display(s) Updating...<br></span>
+        <h2>Uploaded Images</h2>
+        <div id="preview-container"></div>
+        <br>
+
+        <dialog id="confirm-upload-dialog">
+            <h1>Upload Image</h1>
+            <div id="image-upload-options">
+            <select id="fit-input" name="fit">
+                <option value="contain">Contain</option>
+                <option value="cover">Cover</option>
+            </select>
+            <br>
+            <select id="color-input" name="color">
+                <option value="color">Color</option>
+                <option value="bw">B&W</option>
+            </select>
+            <br>
+            <select id="background-input" name="background">
+                <option value="white">White</option>
+                <option value="black">Black</option>
+            </select>
+            </div>
+            <br>
+            <button id="file-submit-button">Display Image</button>
+            <button id="submit-cancel-button">Cancel</button>
+        </dialog>
+    </div>
+
+    <div class="mode-page" data-mode="blank">
+        <br><br>
+        <select id="current-color-selector">
             <option value="white">White</option>
             <option value="black">Black</option>
+            <option value="red">Red</option>
+            <option value="yellow">Yellow</option>
+            <option value="green">Green</option>
+            <option value="blue">Blue</option>
         </select>
-        </div>
-        <br>
-        <button id="file-submit-button">Display Image</button>
-        <button id="submit-cancel-button">Cancel</button>
-    </dialog>
+    </div>
+
+    
 </body>
 </html>
