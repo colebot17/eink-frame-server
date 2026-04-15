@@ -83,6 +83,8 @@ function commitDraft() {
         case "static":
             // make sure there is actually an image
             if (draftState.item == null) return false;
+            // and that it hasn't been deleted
+            if (draftState.item.type === "image" && pendingDeletes.has(draftState.item.id)) return false;
             break;
         case "blank":
             // all good
