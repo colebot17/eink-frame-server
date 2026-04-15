@@ -117,13 +117,13 @@ function setMode(m: Mode) {
         case "static":
             draftState = {
                 "mode": "static",
-                "item": null
+                "item": state.mode === "static" ? structuredClone(state.item) : null
             };
             break;
         case "blank":
             draftState = {
                 "mode": "blank",
-                "color": "white"
+                "color": state.mode === "blank" ? state.color : "white"
             };
             break;
     }
