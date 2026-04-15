@@ -397,8 +397,8 @@ async function processImage(inputPath: string, id: string, palette: RGBColor[], 
     // pack 2 pixels per byte (what the display module expects)
     for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x += 2) {
-            const i1 = (y * w + x) * 4;
-            const i2 = (y * w + x + 1) * 4;
+            const i1 = (y * w + x) * 3;
+            const i2 = (y * w + x + 1) * 3;
 
             const r1 = resData[i1]     || 0, r2 = resData[i2]     || 0
             const g1 = resData[i1 + 1] || 0, g2 = resData[i2 + 1] || 0
