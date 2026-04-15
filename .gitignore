@@ -3,3 +3,4 @@ uploads/*
 processed/*
 node_modules/*
 preview/*
+dist/*

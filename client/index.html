@@ -3,36 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Photo Frame</title>
+    <title>Digital Display</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fascinate&family=Share+Tech&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+    <script type="module" src="src/main.ts"></script>
 </head>
 <body>
-    <h1>Digital Photo Frame</h1>
+    <h1>Digital Display</h1>
 
     <h2>Mode</h2>
-    <div id="mode-selector">
-        <button class="mode-button set" data-mode="static">Static</button>
-        <!-- <button class="mode-button" data-mode="cycle">Cycle</button> -->
+    <div class="mode-selector">
+        <button class="mode-button" data-mode="static">Static</button>
         <button class="mode-button" data-mode="blank">Blank</button>
-        <!-- <button class="mode-button" data-mode="text">Text</button> -->
     </div>
 
-    <div class="mode-page" data-mode="static">
+    <div class="mode-page" data-mode="static" style="display:none">
         <br><br>
         <label for="file-input" id="file-input-label">Upload Image</label>
         <input id="file-input" type="file" name="photo" accept="image/*">
         <br>
         <span id="error" style="display:none"></span>
         <br>
-        <img src="" id="preview">
+        <img src="" class="preview">
         <span id="processing-label" style="display:none">Processing...<br></span>
         <span id="updating-label" style="display:none"><br><br>Display(s) Updating...<br></span>
         <h2>Uploaded Images</h2>
-        <div id="preview-container"></div>
+        <div class="image-list"></div>
         <br>
 
         <dialog id="confirm-upload-dialog">
@@ -54,14 +51,15 @@
             </select>
             </div>
             <br>
-            <button id="file-submit-button">Display Image</button>
-            <button id="submit-cancel-button">Cancel</button>
+            <button class="file-upload-submit-button">Display Image</button>
+            <button class="file-upload-cancel-button">Cancel</button>
         </dialog>
     </div>
 
-    <div class="mode-page" data-mode="blank">
-        <br><br>
-        <select id="current-color-selector">
+    <div class="mode-page" data-mode="blank" style="display:none">
+        <br>
+        <h3 class="color-name"></h3>
+        <select class="blank-color-dropdown">
             <option value="white">White</option>
             <option value="black">Black</option>
             <option value="red">Red</option>
@@ -72,6 +70,10 @@
         <br><br>
     </div>
 
-    
+
+    <div class="commit-container" style="display:none">
+        <button class="reset-button">Reset</button>
+        <button class="commit-button">Apply</button>
+    </div>
 </body>
 </html>
