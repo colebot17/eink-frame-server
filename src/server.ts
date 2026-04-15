@@ -189,6 +189,7 @@ async function serveItem(item: Item, res: Response) {
             const stat = await fsp.stat(filePath);
 
             res.setHeader("Content-Type", "application/octet-stream");
+            res.setHeader("Content-Length", stat.size);
 
             const stream = fs.createReadStream(filePath).pipe(res);
 
