@@ -23,11 +23,8 @@
         <label for="file-input" id="file-input-label">Upload Image</label>
         <input id="file-input" type="file" name="photo" accept="image/*">
         <br>
-        <span id="error" style="display:none"></span>
         <br>
         <img src="" class="preview">
-        <span id="processing-label" style="display:none">Processing...<br></span>
-        <span id="updating-label" style="display:none"><br><br>Display(s) Updating...<br></span>
         <h2>Uploaded Images</h2>
         <div class="image-list"></div>
         <br>
@@ -71,9 +68,16 @@
     </div>
 
 
-    <div class="commit-container" style="display:none">
-        <button class="reset-button">Reset</button>
-        <button class="commit-button">Apply</button>
+    <div class="banner-container">
+        <div class="error banner error-message" style="display:none">
+        </div>
+        <div class="loading-bar banner" style="display:none">
+            Loading
+        </div>
+        <div class="commit-container banner" style="display:none">
+            <button class="reset-button">Reset</button>
+            <button class="commit-button">Apply</button>
+        </div>
     </div>
 </body>
 </html>

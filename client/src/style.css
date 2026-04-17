@@ -87,11 +87,21 @@ button:active {
     display: none;
 }
 
-#error {
-    color: red;
+.banner-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+
+    padding: 10px;
+    
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
 }
 
-.commit-container {
+.banner {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -102,8 +112,11 @@ button:active {
     border-radius: 10px;
     box-shadow: 1px 3px 3px 1px rgba(0, 0, 0, 0.5);
 
-    position: fixed;
-    bottom: 10px;
-    left: 10px;
-    right: 10px;
+    min-height: 32px;
+}
+
+.banner.error {
+    background-color: red;
+    color: white;
+    font-weight: bold;
 }

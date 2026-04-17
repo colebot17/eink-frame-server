@@ -10,7 +10,7 @@ import WebSocket, { WebSocketServer } from "ws";
 import { Worker } from "worker_threads";
 import path from "path";
 
-import type { State, Mode, EPDColor, Item } from "./types/state.js";
+import { type State, type Mode, type EPDColor, type Item, isMode } from "./types/state.js";
 import type { Message } from "./types/websocket.js";
 import type { Img, RGBColor } from "./types/misc.js";
 
@@ -82,7 +82,7 @@ function commitDraft() {
     switch (draftState.mode) {
         case "static":
             // make sure there is actually an image
-            if (draftState.item == null) return false;
+            if (draftState.item == null) return "You must select an image first";
             // and that it hasn't been deleted
             if (draftState.item.type === "image" && pendingDeletes.has(draftState.item.id)) return false;
             break;
@@ -91,7 +91,7 @@ function commitDraft() {
             break;
         default:
             // don't allow any other mode
-            return false;
+            return "Invalid mode";
     }
 
     state = structuredClone(draftState);
@@ -104,7 +104,7 @@ function commitDraft() {
     }
     pendingDeletes.clear();
 
-    return true;
+    return false;
 }
 
 function resetDraft() {
@@ -251,6 +251,16 @@ function sendToClient(client: WebSocket, message: Message) {
     client.send(JSON.stringify(message));
 }
 
+function respondSuccess(ws: WebSocket, reqid: number) {
+    sendToClient(ws, { type: "response", status: "success", reqid });
+}
+function respondNoop(ws: WebSocket, reqid: number) {
+    sendToClient(ws, { type: "response", status: "noop", reqid });
+}
+function respondError(ws: WebSocket, reqid: number, message: string) {
+    sendToClient(ws, { type: "response", status: "error", reqid, message });
+}
+
 wss.on("connection", async ws => {
     console.log("Websocket Connected");
     clients.add(ws);
@@ -277,30 +287,48 @@ wss.on("connection", async ws => {
             case "update_complete":
                 break;
             case "set_mode":
-                switch (msg.mode) {
-                    case "static":
-                    case "blank":
-                        setMode(msg.mode);
-                        break;
+                if (isMode(msg.mode)) {
+                    setMode(msg.mode);
+                    respondSuccess(ws, msg.reqid);
+                } else {
+                    respondError(ws, msg.reqid, "\"" + msg.mode + "\" is not a valid mode");
                 }
                 break;
             case "commit":
-                commitDraft();
+                let err: string | false;
+                if (err = commitDraft()) {
+                    respondError(ws, msg.reqid, err);
+                } else {
+                    respondSuccess(ws, msg.reqid);
+                }
                 break;
             case "reset_draft":
                 resetDraft();
+                respondSuccess(ws, msg.reqid);
                 break;
             case "set_color":
-                if (isEPDColor(msg.color)) setBlankColor(msg.color);
+                if (isEPDColor(msg.color)) {
+                    setBlankColor(msg.color);
+                    respondSuccess(ws, msg.reqid);
+                } else {
+                    respondError(ws, msg.reqid, "Invalid color");
+                }
                 break;
             case "set_image":
-                if (pendingDeletes.has(msg.id)) break;
+                if (pendingDeletes.has(msg.id)) {
+                    respondError(ws, msg.reqid, "Image not found");
+                    break;
+                }
                 fsp.access("./processed/" + msg.id + ".bin").then(() => {
                     setStaticItem({ type: "image", id: msg.id });
+                    respondSuccess(ws, msg.reqid);
+                }).catch(() => {
+                    respondError(ws, msg.reqid, "Image not found");
                 });
                 break;
             case "delete_image":
                 deleteImage(msg.id);
+                respondSuccess(ws, msg.reqid);
                 break;
             default:
                 console.log("Received unknown message from client:", msg);

@@ -12,7 +12,7 @@ const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 // initialize the websocket first thing
 const socket = new WebSocket(SERVER_URL);
 socket.addEventListener("message", e => {
-    const m = JSON.parse(e.data);
+    const m = JSON.parse(e.data) as Message;
     switch (m.type) {
         case "init":
             state = m.state;
@@ -34,13 +34,63 @@ socket.addEventListener("message", e => {
             savedImages = m.images;
             updateImageList();
             break;
+        case "response":
+            reqidFinished(m.reqid);
+            if (m.status === "error") {
+                showError(m.message);
+            } else {
+                clearError();
+            }
+            break;
+        case "progress":
+            break;
     }
 });
+
+const loadingBars = document.querySelectorAll<HTMLElement>(".loading-bar");
+let openRequests = new Set<number>();
+let requidCounter = 1;
+let loading: boolean = false;
+let loadDisplayTimeout: number;
+function makeReqid() {
+    // start loading
+    if (openRequests.size === 0) {
+        loading = true;
+        loadDisplayTimeout = setTimeout(() => {
+            for (const bar of loadingBars) bar.style.display = "";
+            document.body.style.cursor = "wait";
+        }, 200);
+    }
+
+    const reqid = requidCounter++;
+    openRequests.add(reqid);
+    return reqid;
+}
+function reqidFinished(reqid: number) {
+    openRequests.delete(reqid);
+
+    // stop loading
+    if (openRequests.size === 0) {
+        clearTimeout(loadDisplayTimeout);
+        loading = false;
+        for (const bar of loadingBars) bar.style.display = "none";
+        document.body.style.cursor = "";
+    }
+}
+
+const errors = document.querySelectorAll<HTMLElement>(".error");
+const errorMsgs = document.querySelectorAll<HTMLElement>(".error-message");
+function showError(msg: string) {
+    for (const el of errors) el.style.display = "";
+    for (const el of errorMsgs) el.innerHTML = msg;
+}
+function clearError() {
+    for (const el of errors) el.style.display = "none";
+}
 
 // send a message to the server (to perform some action)
 function sendMessage(m: Message) {
     socket.send(JSON.stringify(m));
-    document.body.style.cursor = "wait";
 }
 
 
@@ -58,7 +108,6 @@ function updateDraftState() {
         default:
 
     }
-    document.body.style.cursor = "";
 
     if (hasChanges()) {
         // show the commit containers
@@ -77,13 +126,15 @@ function hasChanges() {
 const commitButtons = document.querySelectorAll<HTMLButtonElement>(".commit-button");
 for (const btn of commitButtons) {
     btn.addEventListener("click", () => {
-        sendMessage({ "type": "commit" });
+        const reqid = makeReqid();
+        sendMessage({ type: "commit", reqid });
     });
 }
 const resetButtons = document.querySelectorAll<HTMLButtonElement>(".reset-button");
 for (const btn of resetButtons) {
     btn.addEventListener("click", () => {
-        sendMessage({ "type": "reset_draft" });
+        const reqid = makeReqid();
+        sendMessage({ type: "reset_draft", reqid });
     });
 }
 
@@ -101,7 +152,8 @@ for (const el of modeButtons) {
 const modePages = document.querySelectorAll<HTMLElement>(".mode-page");
 
 function changeMode(mode: Mode) {
-    sendMessage({ "type": "set_mode", mode });
+    const reqid = makeReqid();
+    sendMessage({ "type": "set_mode", mode, reqid });
 }
 
 function updateMode(mode: Mode) {
@@ -147,13 +199,13 @@ for (const btn of fileUploadCancelButtons) {
 const fileUploadSubmitButtons = document.querySelectorAll<HTMLButtonElement>(".file-upload-submit-button");
 for (const btn of fileUploadSubmitButtons) {
     btn.addEventListener("click", () => {
-        submitFile();
+        uploadImage();
     });
 }
 const fitInput = document.querySelector<HTMLSelectElement>("#fit-input");
 const colorInput = document.querySelector<HTMLSelectElement>("#color-input");
 const backgroundInput = document.querySelector<HTMLSelectElement>("#background-input");
-function submitFile() {
+function uploadImage() {
     // get the file
     const file = fileInput?.files?.[0];
     if (!file) return;
@@ -165,13 +217,13 @@ function submitFile() {
     if (colorInput) formData.set("color", colorInput.value);
     if (backgroundInput) formData.set("background", backgroundInput.value);
 
-    document.body.style.cursor = "wait";
+    const reqid = makeReqid();
 
     // send the request
     fetch(SERVER_URL + "/upload", {
         method: "POST",
         body: formData
-    });
+    }).finally(() => reqidFinished(reqid));
 
     // close the dialog
     closeFileUploadDialog();
@@ -197,7 +249,6 @@ function updateStaticItem(item: Item | null) {
 
 const imageLists = document.querySelectorAll<HTMLElement>(".image-list");
 function updateImageList() {
-    document.body.style.cursor = "";
     for (const list of imageLists) {
         list.innerHTML = "";
         for (const img of savedImages) {
@@ -223,13 +274,13 @@ function addImageToList(container: HTMLElement, i: Img) {
 
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "delete-button";
-    deleteBtn.addEventListener("click", () => sendMessage({ type: "delete_image", id: i.id }));
+    deleteBtn.addEventListener("click", () => sendMessage({ type: "delete_image", id: i.id, reqid: makeReqid() }));
     deleteBtn.innerHTML = "Delete";
     previewBtnContainer.appendChild(deleteBtn);
 
     const selectBtn = document.createElement("button");
     selectBtn.className = "select-button";
-    selectBtn.addEventListener("click", () => sendMessage({ type: "set_image", id: i.id }));
+    selectBtn.addEventListener("click", () => sendMessage({ type: "set_image", id: i.id, reqid: makeReqid() }));
     selectBtn.innerHTML = "Select";
     previewBtnContainer.appendChild(selectBtn);
 }
@@ -248,7 +299,8 @@ const colorNames = document.querySelectorAll<HTMLElement>(".color-name");
 const colorDisplays = document.querySelectorAll<HTMLElement>(".color-display");
 
 function changeBlankColor(color: EPDColor) {
-    sendMessage({ type: "set_color", color });
+    const reqid = makeReqid();
+    sendMessage({ type: "set_color", color, reqid });
 }
 
 function updateBlankColor(color: EPDColor) {
