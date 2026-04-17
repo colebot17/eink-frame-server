@@ -50,12 +50,10 @@ socket.addEventListener("message", e => {
 const loadingBars = document.querySelectorAll<HTMLElement>(".loading-bar");
 let openRequests = new Set<number>();
 let requidCounter = 1;
-let loading: boolean = false;
 let loadDisplayTimeout: number;
 function makeReqid() {
     // start loading
     if (openRequests.size === 0) {
-        loading = true;
         loadDisplayTimeout = setTimeout(() => {
             for (const bar of loadingBars) bar.style.display = "";
             document.body.style.cursor = "wait";
@@ -72,7 +70,6 @@ function reqidFinished(reqid: number) {
     // stop loading
     if (openRequests.size === 0) {
         clearTimeout(loadDisplayTimeout);
-        loading = false;
         for (const bar of loadingBars) bar.style.display = "none";
         document.body.style.cursor = "";
     }
