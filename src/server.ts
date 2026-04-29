@@ -8,6 +8,8 @@ import cors from "cors";
 import sharp, { type Color, type FitEnum } from "sharp";
 import WebSocket, { WebSocketServer } from "ws";
 import { Aedes } from "aedes";
+import persistenceImport from "aedes-persistence";
+const persistence = persistenceImport as unknown as () => any;
 import { createServer } from "net";
 import { Worker } from "worker_threads";
 import path from "path";
@@ -41,7 +43,7 @@ app.use("/preview", express.static("preview"));
 
 app.use(express.json());
 
-const aedes = new Aedes();
+const aedes = await Aedes.createBroker({ persistence: persistence() });
 
 aedes.on("client", client => {
     console.log(`MQTT client connected: ${client.id}`);
@@ -90,7 +92,7 @@ async function loadState() {
         state = structuredClone(DEFAULT_STATE);
         draftState = structuredClone(DEFAULT_STATE);
     }
-    broadcastState();
+    broadcastStateMQTT();
 }
 await loadState();
 
@@ -99,13 +101,17 @@ async function saveState() {
     await fsp.writeFile("./data/state.json", JSON.stringify(state));
 }
 
-function broadcastState() {
+function broadcastStateMQTT() {
     aedes.publish({
         topic: "eink/frame/all/state",
         payload: JSON.stringify(state),
         qos: 0,
         retain: true
     } as any, () => {});
+}
+
+function broadcastState() {
+    broadcastStateMQTT();
     broadcast({ type: "state", state });
 }
 
