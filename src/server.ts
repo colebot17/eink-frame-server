@@ -7,6 +7,8 @@ import multer from "multer";
 import cors from "cors";
 import sharp, { type Color, type FitEnum } from "sharp";
 import WebSocket, { WebSocketServer } from "ws";
+import { Aedes } from "aedes";
+import { createServer } from "net";
 import { Worker } from "worker_threads";
 import path from "path";
 
@@ -39,6 +41,40 @@ app.use("/preview", express.static("preview"));
 
 app.use(express.json());
 
+const aedes = new Aedes();
+
+aedes.on("client", client => {
+    console.log(`MQTT client connected: ${client.id}`);
+});
+
+aedes.on("clientDisconnect", client => {
+    console.log(`MQTT client disconnected: ${client.id}`);
+});
+
+aedes.on("subscribe", (subscriptions, client) => {
+    console.log(`MQTT client ${client.id} subscribed:`, subscriptions.map(s => s.topic));
+});
+
+// aedes.authenticate = (client, username, password, callback) => {
+//     if ((username === "epd2" || username === "epd3") && password?.toString() === "paulisdabest") {
+//         callback(null, true);
+//     } else {
+//         callback(null, false);
+//     }
+// }
+
+aedes.authorizePublish = (client, packet, callback) => {
+    if (client) return callback(new Error("Clients cannot publish"));
+
+    callback(null);
+}
+
+const mqttServer = createServer(aedes.handle);
+const MQTT_PORT = 1883;
+mqttServer.listen(MQTT_PORT, () => {
+    console.log(`MQTT server running on port ${MQTT_PORT}`);
+});
+
 const DEFAULT_STATE : State = { mode: "blank", color: "white" };
 let state : State;
 let draftState : State;
@@ -54,6 +90,7 @@ async function loadState() {
         state = structuredClone(DEFAULT_STATE);
         draftState = structuredClone(DEFAULT_STATE);
     }
+    broadcastState();
 }
 await loadState();
 
@@ -63,6 +100,12 @@ async function saveState() {
 }
 
 function broadcastState() {
+    aedes.publish({
+        topic: "eink/frame/all/state",
+        payload: JSON.stringify(state),
+        qos: 0,
+        retain: true
+    } as any, () => {});
     broadcast({ type: "state", state });
 }
 
@@ -205,7 +248,7 @@ app.get("/currentImage", async (req, res) => {
     switch (state.mode) {
         case "static":
             if (state.item === null) return res.sendStatus(500);
-            serveItem(state.item, res);
+            await serveItem(state.item, res);
             break;
         case "blank":
             // send the raw clear color in a special byte
