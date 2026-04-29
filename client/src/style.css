@@ -3,6 +3,7 @@ body {
     background-size: 1.5rem;
     text-align: center;
     border: 6px solid #B59E5F;
+    padding: 5px;
 }
 
 body, button {
@@ -11,6 +12,10 @@ body, button {
 
 h1 {
     font-family: 'Fascinate', system-ui;
+}
+
+img {
+    max-width: 100%;
 }
 
 .mode-selector {
@@ -63,6 +68,8 @@ button:active {
     outline-offset: 3px;
     padding: 3px;
     background-color: white;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .preview-image {
