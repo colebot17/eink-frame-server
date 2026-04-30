@@ -16,7 +16,7 @@ import path from "path";
 
 import { type State, type Mode, type EPDColor, type Item, isMode } from "./types/state.js";
 import type { Message } from "./types/websocket.js";
-import type { Img, RGBColor } from "./types/misc.js";
+import { isStatus, type Img, type RGBColor } from "./types/misc.js";
 
 const COLOR_MAP : Record<EPDColor, number> = {
     "black": 0x0,
@@ -57,6 +57,14 @@ aedes.on("subscribe", (subscriptions, client) => {
     console.log(`MQTT client ${client.id} subscribed:`, subscriptions.map(s => s.topic));
 });
 
+aedes.subscribe("eink/frame/+/state", (packet, cb) => {
+    const s = packet.payload.toString();
+    if (isStatus(s)) {
+        broadcast({ type: "device_status", device: packet.topic.slice(11, -7), status: s });
+        cb();
+    }
+}, () => {});
+
 // aedes.authenticate = (client, username, password, callback) => {
 //     if ((username === "epd2" || username === "epd3") && password?.toString() === "paulisdabest") {
 //         callback(null, true);
@@ -65,11 +73,11 @@ aedes.on("subscribe", (subscriptions, client) => {
 //     }
 // }
 
-aedes.authorizePublish = (client, packet, callback) => {
-    if (client) return callback(new Error("Clients cannot publish"));
+// aedes.authorizePublish = (client, packet, callback) => {
+//     if (client) return callback(new Error("Clients cannot publish"));
 
-    callback(null);
-}
+//     callback(null);
+// }
 
 const mqttServer = createServer(aedes.handle);
 const MQTT_PORT = 1883;
@@ -331,10 +339,6 @@ wss.on("connection", async ws => {
     ws.on("message", data => {
         const msg: Message = JSON.parse(data.toString());
         switch (msg.type) {
-            case "update_begin":
-                break;
-            case "update_complete":
-                break;
             case "set_mode":
                 if (isMode(msg.mode)) {
                     setMode(msg.mode);

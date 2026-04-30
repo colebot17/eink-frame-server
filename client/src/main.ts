@@ -42,7 +42,8 @@ socket.addEventListener("message", e => {
                 clearError();
             }
             break;
-        case "progress":
+        case "device_status":
+            console.log("device status", m.device, m.status);
             break;
     }
 });

@@ -1,4 +1,4 @@
-import type { Img } from "./misc.js";
+import type { DeviceStatus, Img } from "./misc.js";
 import type { EPDColor, Mode, State } from "./state.js";
 
 type MessageMap = {
@@ -8,11 +8,7 @@ type MessageMap = {
     draft_state: { state: State };
     saved_images: { images: Img[] };
     response: { reqid: number } & ({ status: "success" | "noop" } | { status: "error", message: string});
-    progress: { reqid: number, progress?: number, secsRemaining?: number };
-
-    // display -> server
-    update_begin: {};
-    update_complete: {};
+    device_status: { device: string, status: DeviceStatus }
 
     // app -> server
     commit: { reqid: number };
