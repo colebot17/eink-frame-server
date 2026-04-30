@@ -1,7 +1,7 @@
 import './style.css';
 import { isEPDColor, isMode, type EPDColor, type Item, type Mode, type State } from "../../src/types/state.ts";
 import { type Message } from "../../src/types/websocket.ts";
-import type { Img } from '../../src/types/misc.ts';
+import type { DeviceStatus, Img } from '../../src/types/misc.ts';
 
 let state: State;
 let draftState: State;
@@ -20,6 +20,8 @@ socket.addEventListener("message", e => {
             updateDraftState();
             savedImages = m.images;
             updateImageList();
+            statuses = m.statuses;
+            updateStatuses();
             break;
         case "state":
             state = m.state;
@@ -42,8 +44,12 @@ socket.addEventListener("message", e => {
                 clearError();
             }
             break;
+        case "device_statuses":
+            statuses = m.statuses;
+            updateStatuses();
+            break;
         case "device_status":
-            console.log("device status", m.device, m.status);
+            updateDeviceStatus(m.device, m.status);
             break;
     }
 });
@@ -134,6 +140,68 @@ for (const btn of resetButtons) {
         const reqid = makeReqid();
         sendMessage({ type: "reset_draft", reqid });
     });
+}
+
+// update display previews
+let statuses: Record<string, DeviceStatus> = {};
+const displayContainers = document.querySelectorAll<HTMLElement>(".displays-container");
+function updateStatuses() {
+    for (const displayContainer of displayContainers) {
+        for (const [d, s] of Object.entries(statuses)) {
+            const display = document.createElement("div");
+            display.className = "display";
+            displayContainer.appendChild(display);
+
+            const pvImg = document.createElement("img");
+            pvImg.className = "display-image";
+            display.appendChild(pvImg);
+
+            updateDisplay(display, pvImg, d, s);
+        }
+    }
+}
+
+let flashIntervals: Record<string, number> = {};
+function updateDisplay(display: HTMLElement, img: HTMLImageElement, d: string, s: DeviceStatus) {
+    display.dataset.device = d;
+    display.dataset.status = s;
+    
+    if (s == "idle" && state.mode == "static" && state.item?.type == "image") {
+        img.src = SERVER_URL + "/preview/" + state.item.id + ".png";
+    } else if (s == "fetching") {
+        img.src = "loading.gif";
+    } else if (s == "error") {
+        img.src = "error.png";
+    } else if (s == "offline") {
+        img.src = "offline.png";
+    } else {
+        img.src = "";
+    }
+
+    if (s == "idle" && state.mode == "blank") {
+        display.style.backgroundColor = state.color;
+    } else {
+        display.style.backgroundColor = "white";
+    }
+
+    clearInterval(flashIntervals[d]);
+    if (s == "updating") {
+        const int = setInterval(() => {
+            display.style.backgroundColor = display.style.backgroundColor == "white" ? "#333": "white";
+        }, 250);
+        flashIntervals[d] = int;
+    }
+
+    if (s == "error") {
+        display.title = "An error occured with this display. Check display for more details.";
+    }
+}
+function updateDeviceStatus(d: string, s: DeviceStatus) {
+    const displays = document.querySelectorAll<HTMLElement>(".display[data-device=\"" + d + "\"]");
+    for (const display of displays) {
+        const img = display.querySelectorAll<HTMLImageElement>(".display-image")[0];
+        updateDisplay(display, img, d, s);
+    }
 }
 
 

@@ -277,6 +277,11 @@ app.get("/currentImage", async (req, res) => {
 });
 
 async function getSavedImages() {
+    try {
+        await fsp.access("./processed/");
+    } catch {
+        await fsp.mkdir("./processed/");
+    }
     const files = await fsp.readdir("./processed/");
 
     const images: Img[] = [];
@@ -464,6 +469,11 @@ async function processImage(inputPath: string, id: string, palette: RGBColor[], 
     });
 
     // write the output png directly to a preview png
+    try {
+        await fsp.access("./preview/");
+    } catch {
+        await fsp.mkdir("./preview/");
+    }
     await fsp.writeFile("preview/" + id + ".png", result);
 
     // create the raw binary data

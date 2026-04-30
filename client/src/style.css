@@ -18,6 +18,28 @@ img {
     max-width: 100%;
 }
 
+.displays-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.display {
+    width: 100px;
+    height: 60px;
+    /* padding: 1px; */
+    box-sizing: content-box;
+    border: 10px solid black;
+    border-bottom-width: 12px;
+    background-color: white;
+    transition: background-color 0.2s;
+}
+
+.display .display-image {
+    max-height: 100%;
+}
+
 .mode-selector {
     display: inline-flex;
     flex-direction: row;
