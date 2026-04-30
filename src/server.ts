@@ -16,7 +16,7 @@ import path from "path";
 
 import { type State, type Mode, type EPDColor, type Item, isMode } from "./types/state.js";
 import type { Message } from "./types/websocket.js";
-import { isStatus, type Img, type RGBColor } from "./types/misc.js";
+import { isStatus, type DeviceStatus, type Img, type RGBColor } from "./types/misc.js";
 
 const COLOR_MAP : Record<EPDColor, number> = {
     "black": 0x0,
@@ -57,10 +57,13 @@ aedes.on("subscribe", (subscriptions, client) => {
     console.log(`MQTT client ${client.id} subscribed:`, subscriptions.map(s => s.topic));
 });
 
+let statuses: Record<string, DeviceStatus> = {};
 aedes.subscribe("eink/frame/+/status", (packet, cb) => {
     const s = packet.payload.toString();
     if (isStatus(s)) {
-        broadcast({ type: "device_status", device: packet.topic.slice(11, -7), status: s });
+        const device = packet.topic.slice(11, -7);
+        statuses[device] = s;
+        broadcast({ type: "device_status", device, status: s });
         cb();
     }
 }, () => {});
@@ -129,7 +132,7 @@ function broadcastDraft() {
 
 async function broadcastAll() {
     const images: Img[] = await getSavedImages();
-    broadcast({ type: "init", state, draft: draftState, images });
+    broadcast({ type: "init", state, draft: draftState, images, statuses });
 }
 
 
@@ -301,7 +304,7 @@ async function initClient(ws: WebSocket) {
     if (ws.readyState !== WebSocket.OPEN) throw new Error("Socket not open");
 
     const images = await getSavedImages();
-    sendToClient(ws, { type: "init", state, draft: draftState, images });
+    sendToClient(ws, { type: "init", state, draft: draftState, images, statuses });
 }
 
 function sendToClient(client: WebSocket, message: Message) {

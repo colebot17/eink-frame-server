@@ -3,14 +3,15 @@ import type { EPDColor, Mode, State } from "./state.js";
 
 type MessageMap = {
     // server -> client
-    init: { state: State, draft: State, images: Img[] };
+    init: { state: State, draft: State, images: Img[], statuses: Record<string, DeviceStatus> };
     state: { state: State };
     draft_state: { state: State };
     saved_images: { images: Img[] };
     response: { reqid: number } & ({ status: "success" | "noop" } | { status: "error", message: string});
-    device_status: { device: string, status: DeviceStatus }
+    device_status: { device: string, status: DeviceStatus };
+    device_statuses: { statuses: Record<string, DeviceStatus> };
 
-    // app -> server
+    // web client -> server
     commit: { reqid: number };
     reset_draft: { reqid: number };
     set_mode: { mode: Mode, reqid: number};
