@@ -147,6 +147,7 @@ let statuses: Record<string, DeviceStatus> = {};
 const displayContainers = document.querySelectorAll<HTMLElement>(".displays-container");
 function updateStatuses() {
     for (const displayContainer of displayContainers) {
+        displayContainer.innerHTML = "";
         for (const [d, s] of Object.entries(statuses)) {
             const display = document.createElement("div");
             display.className = "display";
