@@ -57,7 +57,7 @@ aedes.on("subscribe", (subscriptions, client) => {
     console.log(`MQTT client ${client.id} subscribed:`, subscriptions.map(s => s.topic));
 });
 
-aedes.subscribe("eink/frame/+/state", (packet, cb) => {
+aedes.subscribe("eink/frame/+/status", (packet, cb) => {
     const s = packet.payload.toString();
     if (isStatus(s)) {
         broadcast({ type: "device_status", device: packet.topic.slice(11, -7), status: s });
