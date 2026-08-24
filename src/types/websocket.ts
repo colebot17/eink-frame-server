@@ -7,17 +7,17 @@ type MessageMap = {
     state: { state: State };
     draft_state: { state: State };
     saved_images: { images: Img[] };
-    response: { reqid: number } & ({ status: "success" | "noop" } | { status: "error", message: string});
+    response: { reqid: number } & ({ status: "success" | "noop" } | { status: "error", message: string });
     device_status: { device: string, status: DeviceStatus };
     device_statuses: { statuses: Record<string, DeviceStatus> };
 
     // web client -> server
     commit: { reqid: number };
     reset_draft: { reqid: number };
-    set_mode: { mode: Mode, reqid: number};
-    set_color: { color: EPDColor, reqid: number};
-    set_image: { id: string, reqid: number};
-    delete_image: { id: string, reqid: number};
+    set_mode: { mode: Mode, reqid: number };
+    set_color: { color: EPDColor, reqid: number };
+    set_image: { id: string, reqid: number };
+    delete_image: { id: string, reqid: number };
 };
 
 export type Message = {

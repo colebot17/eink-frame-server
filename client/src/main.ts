@@ -56,7 +56,7 @@ socket.addEventListener("message", e => {
 
 const loadingBars = document.querySelectorAll<HTMLElement>(".loading-bar");
 let openRequests = new Set<number>();
-let requidCounter = 1;
+let reqidCounter = 1;
 let loadDisplayTimeout: number;
 function makeReqid() {
     // start loading
@@ -67,7 +67,7 @@ function makeReqid() {
         }, 200);
     }
 
-    const reqid = requidCounter++;
+    const reqid = reqidCounter++;
     openRequests.add(reqid);
     return reqid;
 }
@@ -244,38 +244,55 @@ function updateMode(mode: Mode) {
 }
 
 // static mode
+var currentlyAddingImage: Blob; // holds the image currently being added (between the user selecting it and it being uploaded)
+
+const addItemButton = document.querySelector<HTMLButtonElement>("#add-item-button");
+if (addItemButton) {
+    addItemButton.addEventListener("click", () => {
+        openAddDialog();
+    });
+}
+const addDialog = document.querySelector<HTMLDialogElement>("#add-dialog");
+const linkInput = document.querySelector<HTMLInputElement>("#image-link-input");
+function openAddDialog() {
+    if (linkInput) linkInput.value = "";
+    addDialog?.showModal();
+}
+function closeAddDialog() {
+    addDialog?.close();
+}
+const addCancelButtons = document.querySelectorAll<HTMLButtonElement>(".add-cancel-button");
+for (const btn of addCancelButtons) {
+    btn.addEventListener("click", () => {
+        closeAddDialog();
+    });
+}
 const fileInput = document.querySelector<HTMLInputElement>("#file-input");
-if (fileInput) {
-    fileInput.addEventListener("change", () => {
-        openFileUploadDialog();
-    });
-}
-const fileUploadDialog = document.querySelector<HTMLDialogElement>("#confirm-upload-dialog");
-function openFileUploadDialog() {
-    fileUploadDialog?.showModal();
-}
-function closeFileUploadDialog() {
-    fileUploadDialog?.close();
-}
-const fileUploadCancelButtons = document.querySelectorAll<HTMLButtonElement>(".file-upload-cancel-button");
-for (const btn of fileUploadCancelButtons) {
-    btn.addEventListener("click", () => {
-        closeFileUploadDialog();
-    });
-}
-const fileUploadSubmitButtons = document.querySelectorAll<HTMLButtonElement>(".file-upload-submit-button");
-for (const btn of fileUploadSubmitButtons) {
-    btn.addEventListener("click", () => {
-        uploadImage();
-    });
-}
-const fitInput = document.querySelector<HTMLSelectElement>("#fit-input");
-const colorInput = document.querySelector<HTMLSelectElement>("#color-input");
-const backgroundInput = document.querySelector<HTMLSelectElement>("#background-input");
-function uploadImage() {
+fileInput?.addEventListener("change", () => {
+    previewImageFromUpload();
+});
+
+// previews an image based on the file in the file upload dialog
+function previewImageFromUpload() {
     // get the file
     const file = fileInput?.files?.[0];
     if (!file) return;
+
+    // preview the file
+    previewImage(file);
+}
+
+const fitInput = document.querySelector<HTMLSelectElement>("#fit-input");
+const colorInput = document.querySelector<HTMLSelectElement>("#color-input");
+const backgroundInput = document.querySelector<HTMLSelectElement>("#background-input");
+fitInput?.addEventListener("change", updateImagePreview);
+colorInput?.addEventListener("change", updateImagePreview);
+backgroundInput?.addEventListener("change", updateImagePreview);
+
+// uploads the currently previewed file to the server
+function uploadImage() {
+    // make a file out of the saved blob
+    const file = new File([currentlyAddingImage], "img");
 
     // gather all parameters
     const formData = new FormData();
@@ -293,7 +310,91 @@ function uploadImage() {
     }).finally(() => reqidFinished(reqid));
 
     // close the dialog
-    closeFileUploadDialog();
+    closePreviewDialog();
+}
+
+// preview the image from link when pressing enter or pasting
+linkInput?.addEventListener("keyup", e => {
+    if (e.key == "Enter") {
+        previewImageFromLink();
+    }
+});
+linkInput?.addEventListener("input", e => {
+    if (e.inputType === "insertFromPaste") {
+        previewImageFromLink();
+    }
+});
+
+// previews an image based on the link in the linkInput
+async function previewImageFromLink(link = linkInput?.value) {
+    if (!link) return;
+
+    // request the preview from the server
+    const reqid = makeReqid();
+    try {
+        const formData = new FormData();
+        formData.set("link", link);
+        const res = await fetch(SERVER_URL + "/preview", {
+            method: "POST",
+            body: formData
+        });
+        if (!res.ok) return showError("Invalid Image URL");
+
+        const blob = await res.blob();
+        previewImage(blob);
+    } catch {
+        showError("Error Fetching Image Preview");
+    } finally {
+        reqidFinished(reqid);
+    }
+}
+
+const previewDialog = document.querySelector<HTMLDialogElement>("#confirm-upload-dialog");
+function openPreviewDialog() {
+    previewDialog?.showModal();
+}
+function closePreviewDialog() {
+    previewDialog?.close();
+}
+const previewCancelButtons = document.querySelectorAll<HTMLButtonElement>(".file-upload-cancel-button");
+for (const btn of previewCancelButtons) {
+    btn.addEventListener("click", () => {
+        closePreviewDialog();
+    });
+}
+const previewSubmitButtons = document.querySelectorAll<HTMLButtonElement>(".file-upload-submit-button");
+for (const btn of previewSubmitButtons) {
+    btn.addEventListener("click", () => {
+        uploadImage();
+    });
+}
+
+const imagePreviewEl = document.querySelector<HTMLImageElement>("#image-upload-preview");
+// open the image preview with a given blob
+async function previewImage(blob: Blob) {
+    if (!imagePreviewEl) return;
+
+    const url : string | ArrayBuffer | null = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+    if (typeof url !== "string") return;
+
+    imagePreviewEl.src = url;
+    updateImagePreview();
+    currentlyAddingImage = blob;
+    openPreviewDialog();
+    closeAddDialog();
+}
+
+// updates the display of the image preview (when the inputs are changed)
+function updateImagePreview() {
+    if (!imagePreviewEl) return;
+    imagePreviewEl.style.filter = colorInput?.value == "bw" ? "grayscale(100%)" : "none";
+    imagePreviewEl.style.objectFit = fitInput?.value == "cover" ? "cover" : "contain";
+    imagePreviewEl.style.backgroundColor = backgroundInput?.value || "white";
 }
 
 const previewEls = document.querySelectorAll<HTMLImageElement>(".preview");
