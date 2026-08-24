@@ -18,6 +18,19 @@ import { type State, type Mode, type EPDColor, type Item, isMode } from "./types
 import type { Message } from "./types/websocket.js";
 import { isStatus, type DeviceStatus, type Img, type RGBColor } from "./types/misc.js";
 
+const COLOR_PALETTE_6 : RGBColor[] = [
+    [0, 0, 0],
+    [255, 255, 255],
+    [255, 255, 0],
+    [255, 0, 0],
+    [0, 0, 255],
+    [0, 255, 0]
+];
+const COLOR_PALETTE_2 : RGBColor[] = [
+    [0, 0, 0],
+    [255, 255, 255]
+];
+
 const COLOR_MAP : Record<EPDColor, number> = {
     "black": 0x0,
     "white": 0x1,
@@ -218,7 +231,7 @@ app.post("/upload", upload.single("photo"), async (req, res) => {
     await processImage(
         file.path,
         file.filename,
-        await loadACT(req.body.color == "bw" ? "color_profiles/Black-White.act" : "color_profiles/6-color.act"),
+        req.body.color == "bw" ? COLOR_PALETTE_2 : COLOR_PALETTE_6,
         req.body.fit || "contain",
         req.body.background == "black" ? { r: 0, g: 0, b: 0, alpha: 1 } : { r: 255, g: 255, b: 255, alpha: 1}
     );
@@ -229,6 +242,25 @@ app.post("/upload", upload.single("photo"), async (req, res) => {
     broadcastAll();
 
     res.sendStatus(200);
+});
+
+// preview image by link
+app.post("/preview", upload.none(), async (req, res) => {
+    try {
+        const imgBlob = await loadImageFromLink(req.body.link);
+        const imgArrBuff = await imgBlob.arrayBuffer();
+        const imgBuff = Buffer.from(imgArrBuff);
+
+        const resizedImgBuff = await sharp(imgBuff)
+            .resize({ width: 800, height: 480, fit: "outside", withoutEnlargement: true })
+            .toFormat("png")
+            .toBuffer();
+
+        res.set("Content-Type", imgBlob.type || "image/jpeg");
+        res.send(resizedImgBuff);
+    } catch {
+        res.status(404).send("Image not available");
+    }
 });
 
 async function deleteImage(id: string) {
@@ -298,6 +330,25 @@ async function getSavedImages() {
     return images;
 }
 
+function loadImageFromLink(link: string) : Promise<Blob> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // download the image
+            const res = await fetch(link);
+            const blob = await res.blob();
+
+            // make sure it's actually an image
+            if (!blob.type.startsWith("image/")) {
+                reject();
+            } else {
+                resolve(blob);
+            }
+        } catch {
+            reject();
+        }
+    });
+}
+
 
 const server = http.createServer(app);
 
@@ -344,7 +395,7 @@ wss.on("connection", async ws => {
         ws.close();
     });
 
-    ws.on("message", data => {
+    ws.on("message", async data => {
         const msg: Message = JSON.parse(data.toString());
         switch (msg.type) {
             case "set_mode":
@@ -422,30 +473,6 @@ function broadcast(data: Message) {
 server.listen(3000, () => {
     console.log('Server is running on http://localhost:3000');
 });
-
-// loads an adobe color table and returns it as a list of color arrays
-async function loadACT(path: fs.PathLike | fs.promises.FileHandle) {
-    const buffer = await fsp.readFile(path);
-    const palette: Array<RGBColor> = [];
-    for (let i = 0; i < buffer.length; i += 3) {
-        const r = buffer[i];
-        const g = buffer[i + 1];
-        const b = buffer[i + 2];
-
-        if (r === undefined || g === undefined || b === undefined) break;
-
-        let exists = false;
-        for (let j = 0; j < palette.length; j++) {
-            if (palette[j]?.[0] === r && palette[j]?.[1] === g && palette[j]?.[2] === b) {
-                exists = true;
-                break;
-            }
-        }
-
-        if (!exists) palette.push([ r, g, b ]);
-    }
-    return palette;
-}
 
 async function processImage(inputPath: string, id: string, palette: RGBColor[], fit: keyof FitEnum, background: Color) {
     // make the image the right size and format it as a png buffer
