@@ -282,6 +282,112 @@ function previewImageFromUpload() {
     previewImage(file);
 }
 
+const addTextDialog = document.querySelector<HTMLDialogElement>("#add-text-dialog");
+function openAddTextDialog() {
+    closeAddDialog();
+    addTextDialog?.showModal();
+}
+function closeAddTextDialog() {
+    addTextDialog?.close();
+}
+const addTextDialogCloseButton = document.querySelector<HTMLButtonElement>("#add-text-dialog-close-button");
+addTextDialogCloseButton?.addEventListener("click", closeAddTextDialog);
+const textUploadButton = document.querySelector<HTMLButtonElement>("#text-upload-button");
+textUploadButton?.addEventListener("click", uploadTextImage);
+const addTextButton = document.querySelector<HTMLLinkElement>("#text-add-button");
+addTextButton?.addEventListener("click", openAddTextDialog);
+const textCanvas = document.querySelector<HTMLCanvasElement>("#text-canvas");
+
+const addTextInput = document.querySelector<HTMLInputElement>("#add-text-input");
+addTextInput?.addEventListener("input", () => { updateText(); resizeAddTextInput(); });
+addTextInput?.addEventListener("selectionchange", () => { updateText() });
+
+function resizeAddTextInput() {
+    if (!addTextInput) return;
+
+    const nlines = addTextInput.value.split("\n").length;
+    const totalHeight = nlines * 36;
+
+    addTextInput.style.height = totalHeight + "px";
+}
+resizeAddTextInput();
+
+const fgColorInput = document.querySelector<HTMLInputElement>("#fg-color-input");
+const bgColorInput = document.querySelector<HTMLInputElement>("#bg-color-input");
+fgColorInput?.addEventListener("change", () => { updateText() });
+bgColorInput?.addEventListener("change", () => { updateText() });
+
+function renderText(text: string, fg = "#000000", bg = "#FFFFFF", selStart: number | null = null, selEnd: number | null = null) {
+    if (!textCanvas) return;
+
+    const ctx = textCanvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, textCanvas.width, textCanvas.height);
+
+    const lines = text.split("\n");
+
+    let lineCharStart = 0;
+    let lineCharEnd = 0;
+    for (let i = 0; i < lines.length; i++) {
+        ctx.fillStyle = fg;
+        ctx.font = "bold 32px sans-serif";
+        ctx.textBaseline = "top";
+        ctx.textAlign = "center";
+
+        lineCharEnd += lines[i].length + 1;
+
+        ctx.fillText(lines[i], textCanvas.width / 2, textCanvas.height / 2 + (i - lines.length / 2) * 36);
+
+        if (selStart !== null && selEnd !== null && document.activeElement == addTextInput) {
+            let lineSelStart = selStart - lineCharStart;
+            let lineSelEnd = selEnd - lineCharStart;
+            if (lineSelStart < 0) lineSelStart = 0;
+            if (lineSelEnd > lines[i].length) lineSelEnd = lines[i].length;
+
+            if (lineSelStart <= lines[i].length && lineSelEnd >= 0) {
+                const beforeSelSubstr = lines[i].substring(0, lineSelStart);
+                const selSubstr = lines[i].substring(lineSelStart, lineSelEnd);
+
+                const beforeSelWidth = ctx.measureText(beforeSelSubstr).width;
+                const selWidth = ctx.measureText(selSubstr).width;
+                const totalWidth = ctx.measureText(lines[i]).width;
+
+                const selBoxX = textCanvas.width / 2 - totalWidth / 2 + beforeSelWidth;
+                const selBoxY = textCanvas.height / 2 + (i - lines.length / 2) * 36 - 2;
+
+                ctx.fillStyle = "#ffffff99";
+                ctx.fillRect(selBoxX, selBoxY, selWidth, 32);
+                ctx.strokeStyle = "#00000066";
+                ctx.lineWidth = 3;
+                ctx.strokeRect(selBoxX, selBoxY, selWidth, 32);
+            }
+            
+        }
+
+        lineCharStart += lines[i].length + 1;
+    }
+}
+function updateText(useSel = true) {
+    if (!addTextInput) return;
+    renderText(addTextInput.value, fgColorInput?.value, bgColorInput?.value, useSel ? addTextInput.selectionStart : null, useSel ? addTextInput.selectionEnd : null);
+}
+updateText();
+
+function uploadTextImage() {
+    if (!textCanvas) return;
+
+    updateText(false);
+    textCanvas.toBlob(blob => {
+        if (!blob) return;
+        currentlyAddingImage = blob;
+        uploadImage();
+    });
+
+    closeAddTextDialog();
+}
+
 const fitInput = document.querySelector<HTMLSelectElement>("#fit-input");
 const colorInput = document.querySelector<HTMLSelectElement>("#color-input");
 const backgroundInput = document.querySelector<HTMLSelectElement>("#background-input");
