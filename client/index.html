@@ -40,7 +40,26 @@
             <br>
             <input id="image-link-input" type="text" placeholder="https://...">
             <br><br>
+            <span> or <a id="text-add-button">add text</a></span>
+            <br><br>
             <button class="add-cancel-button">Cancel</button>
+        </dialog>
+
+        <dialog id="add-text-dialog">
+            <h1>Add Text</h1>
+            <div id="add-text-preview-box">
+                <canvas id="text-canvas" width="800" height="480">
+                    The canvas element is not supported on your browser
+                </canvas>
+                <div id="add-text-input-wrapper">
+                    <textarea id="add-text-input"></textarea>
+                </div>
+            </div>
+            <br>
+            <input type="color" id="fg-color-input" value="#000000"><input type="color" id="bg-color-input" value="#FFFFFF">
+            <br><br>
+            <button id="text-upload-button">Add</button>
+            <button id="add-text-dialog-close-button">Cancel</button>
         </dialog>
 
         <dialog id="confirm-upload-dialog">

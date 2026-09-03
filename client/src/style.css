@@ -52,12 +52,40 @@ img {
     font-weight: bold;
 }
 
-#file-input-label {
+#file-input-label, #text-add-button {
     text-decoration: underline;
+    cursor: pointer;
 }
 
 #file-input {
     display: none;
+}
+
+#add-text-preview-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+#add-text-input-wrapper {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+}
+#add-text-input {
+    font-size: 32px;
+    font-weight: bold;
+    font-family: sans-serif;
+    text-align: center;
+    line-height: 36px;
+    resize: none;
+    overflow: hidden;
 }
 
 #image-upload-preview-container {
@@ -96,7 +124,7 @@ button:active {
     flex-wrap: wrap;
 }
 
-.preview {
+.preview, #text-canvas {
     border: 6px solid #B59E5F;
     border-radius: 12px;
     outline-offset: 3px;
